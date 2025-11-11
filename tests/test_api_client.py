@@ -1,5 +1,6 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 import pytest
+from anthropic import APIError
 from claude_lint.api_client import analyze_files, get_usage_stats
 
 
@@ -69,3 +70,14 @@ def test_get_usage_stats(mock_anthropic):
     assert stats["output_tokens"] == 50
     assert stats["cache_creation_tokens"] == 200
     assert stats["cache_read_tokens"] == 0
+
+
+@patch('claude_lint.api_client.Anthropic')
+def test_analyze_files_does_not_catch_keyboard_interrupt(mock_anthropic):
+    """Test that KeyboardInterrupt is not caught."""
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = KeyboardInterrupt()
+    mock_anthropic.return_value = mock_client
+
+    with pytest.raises(KeyboardInterrupt):
+        analyze_files("key", "guidelines", "prompt")

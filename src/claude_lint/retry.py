@@ -24,6 +24,8 @@ def retry_with_backoff(
 
     Raises:
         Exception: The last exception if all retries exhausted
+        KeyboardInterrupt: Immediately re-raised without retry
+        SystemExit: Immediately re-raised without retry
     """
     last_exception = None
     delay = initial_delay
@@ -31,6 +33,9 @@ def retry_with_backoff(
     for attempt in range(max_retries):
         try:
             return func()
+        except (KeyboardInterrupt, SystemExit):
+            # Never catch these - re-raise immediately
+            raise
         except Exception as e:
             last_exception = e
 

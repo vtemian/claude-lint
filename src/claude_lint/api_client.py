@@ -1,6 +1,6 @@
 """Claude API client with prompt caching support."""
 from typing import Optional, Any
-from anthropic import Anthropic
+from anthropic import Anthropic, APIError, APIConnectionError, RateLimitError
 
 
 def analyze_files(api_key: str, guidelines: str, prompt: str) -> tuple[str, Any]:
@@ -16,7 +16,7 @@ def analyze_files(api_key: str, guidelines: str, prompt: str) -> tuple[str, Any]
 
     Raises:
         ValueError: If guidelines or prompt are empty or invalid
-        RuntimeError: If API call fails or returns empty response
+        APIError: If API call fails (includes connection, rate limit, etc.)
     """
     # Input validation
     if not guidelines or not isinstance(guidelines, str) or not guidelines.strip():
@@ -45,8 +45,12 @@ def analyze_files(api_key: str, guidelines: str, prompt: str) -> tuple[str, Any]
                 }
             ]
         )
-    except Exception as e:
-        raise RuntimeError(f"API call failed: {e}") from e
+    except (APIError, APIConnectionError, RateLimitError) as e:
+        # Re-raise specific API errors as-is
+        raise
+    except (KeyboardInterrupt, SystemExit):
+        # Never catch these
+        raise
 
     # Validate response
     if not response.content:
