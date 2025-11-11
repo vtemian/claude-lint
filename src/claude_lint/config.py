@@ -12,6 +12,7 @@ class Config:
     exclude: list[str]
     batch_size: int
     model: str = "claude-sonnet-4-5-20250929"
+    max_file_size_mb: float = 1.0
     api_key: Optional[str] = None
 
 
@@ -26,6 +27,7 @@ def get_default_config() -> Config:
         exclude=["node_modules/**", "dist/**", ".git/**"],
         batch_size=10,
         model="claude-sonnet-4-5-20250929",
+        max_file_size_mb=1.0,
         api_key=None
     )
 
@@ -52,5 +54,6 @@ def load_config(config_path: Path) -> Config:
         exclude=data.get("exclude", defaults.exclude),
         batch_size=data.get("batchSize", defaults.batch_size),
         model=data.get("model", defaults.model),
+        max_file_size_mb=data.get("maxFileSizeMb", defaults.max_file_size_mb),
         api_key=data.get("apiKey")
     )

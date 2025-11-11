@@ -111,8 +111,25 @@ def run_compliance_check(
 
         # Read file contents
         file_contents = {}
+        max_size_bytes = int(config.max_file_size_mb * 1024 * 1024)
+
         for file_path in batch:
             rel_path = file_path.relative_to(project_root)
+
+            # Check file size
+            try:
+                file_size = file_path.stat().st_size
+                if file_size > max_size_bytes:
+                    logger.warning(
+                        f"File {rel_path} exceeds size limit "
+                        f"({file_size / 1024 / 1024:.2f}MB > "
+                        f"{config.max_file_size_mb}MB), skipping"
+                    )
+                    continue
+            except OSError as e:
+                logger.warning(f"Cannot stat file {rel_path}, skipping: {e}")
+                continue
+
             try:
                 # Try UTF-8 first
                 content = file_path.read_text(encoding='utf-8')
