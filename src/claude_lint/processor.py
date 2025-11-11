@@ -1,7 +1,11 @@
 """Batch processing and XML prompt generation."""
 import json
+import logging
 import re
+import xml.sax.saxutils as saxutils
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def build_xml_prompt(claude_md_content: str, files: dict[str, str]) -> str:
@@ -14,13 +18,19 @@ def build_xml_prompt(claude_md_content: str, files: dict[str, str]) -> str:
     Returns:
         XML formatted prompt
     """
-    # Build files XML
-    files_xml = ""
+    # Build files XML using list and join for efficiency
+    files_xml_parts = []
     for file_path, content in files.items():
-        files_xml += f'  <file path="{file_path}">\n{content}\n  </file>\n'
+        escaped_path = saxutils.escape(file_path, {'"': '&quot;'})
+        escaped_content = saxutils.escape(content)
+        files_xml_parts.append(f'  <file path="{escaped_path}">\n{escaped_content}\n  </file>\n')
+    files_xml = ''.join(files_xml_parts)
+
+    # Escape claude_md_content for XML
+    escaped_claude_md = saxutils.escape(claude_md_content)
 
     prompt = f"""<guidelines>
-{claude_md_content}
+{escaped_claude_md}
 </guidelines>
 
 Check the following files for compliance with the guidelines above.
@@ -98,10 +108,12 @@ class BatchProcessor:
             if json_match:
                 json_str = json_match.group(0)
             else:
+                logger.warning("No JSON found in response")
                 return []
 
         try:
             data = json.loads(json_str)
             return data.get("results", [])
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse JSON from response: {e}")
             return []

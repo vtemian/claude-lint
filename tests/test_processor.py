@@ -25,6 +25,30 @@ def test_build_xml_prompt():
     assert "</files>" in prompt
 
 
+def test_build_xml_prompt_escapes_special_characters():
+    """Test that special XML characters are properly escaped."""
+    claude_md_content = "Use <template> & avoid >>>"
+    files = {
+        'path/with"quote.py': 'x = 5 < 10 & y > 3',
+        "normal.py": "return a & b"
+    }
+
+    prompt = build_xml_prompt(claude_md_content, files)
+
+    # Check that claude_md_content is escaped
+    assert "Use &lt;template&gt; &amp; avoid &gt;&gt;&gt;" in prompt
+
+    # Check that file paths with quotes are escaped
+    assert 'path/with&quot;quote.py' in prompt
+
+    # Check that file content is escaped
+    assert "x = 5 &lt; 10 &amp; y &gt; 3" in prompt
+    assert "return a &amp; b" in prompt
+
+    # Ensure no unescaped special characters in file content
+    assert 'x = 5 < 10 & y > 3' not in prompt
+
+
 def test_batch_files():
     """Test batching files into groups."""
     files = [f"file{i}.py" for i in range(25)]
