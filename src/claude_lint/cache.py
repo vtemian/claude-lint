@@ -2,7 +2,7 @@
 import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 
 @dataclass
@@ -10,7 +10,7 @@ class CacheEntry:
     """Cache entry for a single file."""
     file_hash: str
     claude_md_hash: str
-    violations: list[str]
+    violations: list[dict[str, Any]]
     timestamp: int
 
 
@@ -33,8 +33,11 @@ def load_cache(cache_path: Path) -> Cache:
     if not cache_path.exists():
         return Cache(claude_md_hash="", entries={})
 
-    with open(cache_path) as f:
-        data = json.load(f)
+    try:
+        with open(cache_path) as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return Cache(claude_md_hash="", entries={})
 
     entries = {}
     for file_path, entry_data in data.get("entries", {}).items():

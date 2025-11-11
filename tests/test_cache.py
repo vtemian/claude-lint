@@ -10,13 +10,13 @@ def test_cache_entry_creation():
     entry = CacheEntry(
         file_hash="abc123",
         claude_md_hash="def456",
-        violations=["missing docstring"],
+        violations=[{"type": "error", "message": "missing docstring", "line": None}],
         timestamp=1234567890
     )
 
     assert entry.file_hash == "abc123"
     assert entry.claude_md_hash == "def456"
-    assert entry.violations == ["missing docstring"]
+    assert entry.violations == [{"type": "error", "message": "missing docstring", "line": None}]
 
 
 def test_load_cache_empty():
@@ -42,7 +42,7 @@ def test_save_and_load_cache():
                 "file1.py": CacheEntry(
                     file_hash="filehash1",
                     claude_md_hash="hash123",
-                    violations=["error1"],
+                    violations=[{"type": "error", "message": "error1", "line": None}],
                     timestamp=1234567890
                 )
             }
