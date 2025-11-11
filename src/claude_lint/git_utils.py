@@ -1,7 +1,6 @@
 """Git integration utilities."""
 from pathlib import Path
 import subprocess
-from typing import Optional
 
 
 def is_git_repo(path: Path) -> bool:
