@@ -1,0 +1,106 @@
+"""Report formatting and output."""
+import json
+from typing import Any
+
+
+def format_detailed_report(results: list[dict[str, Any]]) -> str:
+    """Format results as detailed human-readable report.
+
+    Args:
+        results: List of file results with violations
+
+    Returns:
+        Formatted report string
+    """
+    lines = []
+    lines.append("=" * 70)
+    lines.append("CLAUDE.MD COMPLIANCE REPORT")
+    lines.append("=" * 70)
+    lines.append("")
+
+    for result in results:
+        file_path = result["file"]
+        violations = result["violations"]
+
+        if violations:
+            lines.append(f"📄 {file_path}")
+            lines.append(f"   {len(violations)} violation(s) found:")
+            lines.append("")
+
+            for violation in violations:
+                vtype = violation["type"]
+                message = violation["message"]
+                line = violation.get("line")
+
+                line_info = f" (line {line})" if line else ""
+                lines.append(f"   ⚠️  [{vtype}]{line_info}")
+                lines.append(f"      {message}")
+                lines.append("")
+        else:
+            lines.append(f"{file_path}")
+            lines.append("   ✓ No violations")
+            lines.append("")
+
+    return "\n".join(lines)
+
+
+def format_json_report(results: list[dict[str, Any]]) -> str:
+    """Format results as JSON.
+
+    Args:
+        results: List of file results with violations
+
+    Returns:
+        JSON string
+    """
+    total_files = len(results)
+    files_with_violations = sum(1 for r in results if r["violations"])
+    total_violations = sum(len(r["violations"]) for r in results)
+
+    report = {
+        "results": results,
+        "summary": {
+            "total_files": total_files,
+            "files_with_violations": files_with_violations,
+            "clean_files": total_files - files_with_violations,
+            "total_violations": total_violations
+        }
+    }
+
+    return json.dumps(report, indent=2)
+
+
+class Reporter:
+    """Handles result reporting and output."""
+
+    def get_exit_code(self, results: list[dict[str, Any]]) -> int:
+        """Get exit code based on results.
+
+        Args:
+            results: List of file results
+
+        Returns:
+            0 if no violations, 1 if violations found
+        """
+        has_violations = any(r["violations"] for r in results)
+        return 1 if has_violations else 0
+
+    def get_summary(self, results: list[dict[str, Any]]) -> dict[str, int]:
+        """Get summary statistics.
+
+        Args:
+            results: List of file results
+
+        Returns:
+            Dict with summary counts
+        """
+        total_files = len(results)
+        files_with_violations = sum(1 for r in results if r["violations"])
+        total_violations = sum(len(r["violations"]) for r in results)
+
+        return {
+            "total_files": total_files,
+            "files_with_violations": files_with_violations,
+            "clean_files": total_files - files_with_violations,
+            "total_violations": total_violations
+        }
