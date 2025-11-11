@@ -97,8 +97,18 @@ class Orchestrator:
             file_contents = {}
             for file_path in batch:
                 rel_path = file_path.relative_to(self.project_root)
-                content = file_path.read_text()
-                file_contents[str(rel_path)] = content
+                try:
+                    content = file_path.read_text(encoding='utf-8', errors='replace')
+                    file_contents[str(rel_path)] = content
+                except FileNotFoundError:
+                    print(f"Warning: File not found, skipping: {rel_path}")
+                    continue
+                except UnicodeDecodeError:
+                    print(f"Warning: Unable to decode file, skipping: {rel_path}")
+                    continue
+                except Exception as e:
+                    print(f"Warning: Error reading file {rel_path}, skipping: {e}")
+                    continue
 
             # Build prompt
             prompt = build_xml_prompt(self.guidelines, file_contents)
