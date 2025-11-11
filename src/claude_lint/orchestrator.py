@@ -98,13 +98,24 @@ def run_compliance_check(
         for file_path in batch:
             rel_path = file_path.relative_to(project_root)
             try:
-                content = file_path.read_text(encoding='utf-8', errors='replace')
+                # Try UTF-8 first
+                content = file_path.read_text(encoding='utf-8')
                 file_contents[str(rel_path)] = content
+            except UnicodeDecodeError:
+                # Fall back to latin-1 which accepts all byte sequences
+                try:
+                    logger.warning(
+                        f"File {rel_path} is not valid UTF-8, trying latin-1"
+                    )
+                    content = file_path.read_text(encoding='latin-1')
+                    file_contents[str(rel_path)] = content
+                except Exception as e:
+                    logger.warning(
+                        f"Unable to decode file {rel_path}, skipping: {e}"
+                    )
+                    continue
             except FileNotFoundError:
                 logger.warning(f"File not found, skipping: {rel_path}")
-                continue
-            except UnicodeDecodeError:
-                logger.warning(f"Unable to decode file, skipping: {rel_path}")
                 continue
             except Exception as e:
                 logger.warning(f"Error reading file {rel_path}, skipping: {e}")
