@@ -7,9 +7,10 @@ from claude_lint.orchestrator import run_compliance_check
 from claude_lint.config import Config
 
 
-@patch("claude_lint.orchestrator.analyze_files")
+@patch("claude_lint.orchestrator.analyze_files_with_client")
+@patch("claude_lint.orchestrator.create_client")
 @patch("claude_lint.orchestrator.is_git_repo")
-def test_orchestrator_full_scan(mock_is_git, mock_analyze):
+def test_orchestrator_full_scan(mock_is_git, mock_create_client, mock_analyze):
     """Test full project scan mode."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
@@ -21,6 +22,10 @@ def test_orchestrator_full_scan(mock_is_git, mock_analyze):
 
         # Mock git check
         mock_is_git.return_value = False
+
+        # Mock client creation
+        mock_client = Mock()
+        mock_create_client.return_value = mock_client
 
         # Mock Claude API
         mock_analyze.return_value = ("""
@@ -47,12 +52,14 @@ def test_orchestrator_full_scan(mock_is_git, mock_analyze):
         # Verify
         assert len(results) == 2
         assert mock_analyze.called
+        assert mock_create_client.called
 
 
-@patch("claude_lint.orchestrator.analyze_files")
+@patch("claude_lint.orchestrator.analyze_files_with_client")
+@patch("claude_lint.orchestrator.create_client")
 @patch("claude_lint.orchestrator.get_changed_files_from_branch")
 @patch("claude_lint.orchestrator.is_git_repo")
-def test_orchestrator_diff_mode(mock_is_git, mock_git_diff, mock_analyze):
+def test_orchestrator_diff_mode(mock_is_git, mock_git_diff, mock_create_client, mock_analyze):
     """Test diff mode with git."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
@@ -65,6 +72,10 @@ def test_orchestrator_diff_mode(mock_is_git, mock_git_diff, mock_analyze):
         # Mock git
         mock_is_git.return_value = True
         mock_git_diff.return_value = ["file1.py"]  # Only file1 changed
+
+        # Mock client creation
+        mock_client = Mock()
+        mock_create_client.return_value = mock_client
 
         # Mock Claude API
         mock_analyze.return_value = ("""
@@ -86,3 +97,4 @@ def test_orchestrator_diff_mode(mock_is_git, mock_git_diff, mock_analyze):
         # Verify only file1 was checked
         assert len(results) == 1
         assert results[0]["file"] == "file1.py"
+        assert mock_create_client.called

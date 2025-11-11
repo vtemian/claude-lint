@@ -3,16 +3,28 @@ from typing import Optional, Any
 from anthropic import Anthropic, APIError, APIConnectionError, RateLimitError
 
 
-def analyze_files(
-    api_key: str,
+def create_client(api_key: str) -> Anthropic:
+    """Create Anthropic client.
+
+    Args:
+        api_key: Anthropic API key
+
+    Returns:
+        Anthropic client instance
+    """
+    return Anthropic(api_key=api_key)
+
+
+def analyze_files_with_client(
+    client: Anthropic,
     guidelines: str,
     prompt: str,
     model: str = "claude-sonnet-4-5-20250929"
 ) -> tuple[str, Any]:
-    """Analyze files using Claude API with cached guidelines.
+    """Analyze files using existing Claude API client.
 
     Args:
-        api_key: Anthropic API key
+        client: Anthropic client instance
         guidelines: CLAUDE.md content (will be cached)
         prompt: Prompt with files to analyze
         model: Claude model to use
@@ -29,8 +41,6 @@ def analyze_files(
         raise ValueError("guidelines must be a non-empty string")
     if not prompt or not isinstance(prompt, str) or not prompt.strip():
         raise ValueError("prompt must be a non-empty string")
-
-    client = Anthropic(api_key=api_key)
 
     # Use prompt caching for guidelines
     try:
@@ -63,6 +73,34 @@ def analyze_files(
         raise ValueError("API returned empty response content")
 
     return response.content[0].text, response
+
+
+def analyze_files(
+    api_key: str,
+    guidelines: str,
+    prompt: str,
+    model: str = "claude-sonnet-4-5-20250929"
+) -> tuple[str, Any]:
+    """Analyze files using Claude API with cached guidelines.
+
+    Convenience wrapper that creates client and makes call.
+    For multiple calls, use create_client() and analyze_files_with_client().
+
+    Args:
+        api_key: Anthropic API key
+        guidelines: CLAUDE.md content (will be cached)
+        prompt: Prompt with files to analyze
+        model: Claude model to use
+
+    Returns:
+        Tuple of (response text, response object)
+
+    Raises:
+        ValueError: If guidelines or prompt are empty or invalid
+        APIError: If API call fails (includes connection, rate limit, etc.)
+    """
+    client = create_client(api_key)
+    return analyze_files_with_client(client, guidelines, prompt, model)
 
 
 def get_usage_stats(response: Any) -> dict:

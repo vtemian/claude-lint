@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Any, Optional
 
-from claude_lint.api_client import analyze_files
+from claude_lint.api_client import analyze_files, create_client, analyze_files_with_client
 from claude_lint.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -100,6 +100,9 @@ def run_compliance_check(
     # Check for resumable progress
     progress_state = init_or_load_progress(progress_path, len(batches))
 
+    # Create API client once for all batches
+    client = create_client(api_key)
+
     # Process batches
     all_results = list(progress_state.results)  # Start with resumed results
 
@@ -139,8 +142,8 @@ def run_compliance_check(
 
         # Make API call with retry
         def api_call():
-            response_text, response_obj = analyze_files(
-                api_key, guidelines, prompt, model=config.model
+            response_text, response_obj = analyze_files_with_client(
+                client, guidelines, prompt, model=config.model
             )
             return response_text
 

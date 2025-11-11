@@ -24,14 +24,16 @@ def test_file_with_invalid_utf8():
         )
 
         # Should skip binary file with warning (check logs)
-        with patch("claude_lint.orchestrator.analyze_files") as mock_api:
-            mock_api.return_value = ('{"results": []}', Mock())
+        with patch("claude_lint.orchestrator.analyze_files_with_client") as mock_api:
+            with patch("claude_lint.orchestrator.create_client") as mock_create:
+                mock_create.return_value = Mock()
+                mock_api.return_value = ('{"results": []}', Mock())
 
-            # File should be skipped, not crash
-            results = run_compliance_check(tmpdir, config, mode="full")
+                # File should be skipped, not crash
+                results = run_compliance_check(tmpdir, config, mode="full")
 
-            # Should return empty or handle gracefully
-            assert isinstance(results, list)
+                # Should return empty or handle gracefully
+                assert isinstance(results, list)
 
 
 def test_file_reading_fallback_encoding():
@@ -54,13 +56,15 @@ def test_file_reading_fallback_encoding():
             api_key="test-key"
         )
 
-        with patch("claude_lint.orchestrator.analyze_files") as mock_api:
-            mock_api.return_value = (
-                '{"results": [{"file": "latin.py", "violations": []}]}',
-                Mock()
-            )
+        with patch("claude_lint.orchestrator.analyze_files_with_client") as mock_api:
+            with patch("claude_lint.orchestrator.create_client") as mock_create:
+                mock_create.return_value = Mock()
+                mock_api.return_value = (
+                    '{"results": [{"file": "latin.py", "violations": []}]}',
+                    Mock()
+                )
 
-            results = run_compliance_check(tmpdir, config, mode="full")
+                results = run_compliance_check(tmpdir, config, mode="full")
 
-            # Should successfully read with fallback
-            assert mock_api.called
+                # Should successfully read with fallback
+                assert mock_api.called
