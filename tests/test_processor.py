@@ -1,6 +1,6 @@
 from pathlib import Path
 import pytest
-from claude_lint.processor import BatchProcessor, build_xml_prompt
+from claude_lint.processor import create_batches, parse_response, build_xml_prompt
 
 
 def test_build_xml_prompt():
@@ -54,8 +54,7 @@ def test_batch_files():
     files = [f"file{i}.py" for i in range(25)]
     batch_size = 10
 
-    processor = BatchProcessor(batch_size)
-    batches = processor.create_batches(files)
+    batches = create_batches(files, batch_size)
 
     assert len(batches) == 3  # 10, 10, 5
     assert len(batches[0]) == 10
@@ -90,8 +89,7 @@ def test_parse_response():
     ```
     """
 
-    processor = BatchProcessor(batch_size=10)
-    results = processor.parse_response(response)
+    results = parse_response(response)
 
     assert len(results) == 2
     assert results[0]["file"] == "src/main.py"

@@ -43,11 +43,14 @@ uv run ruff format src/
 
 ## Code Style
 
+- NEVER USE CLASSES - use functions and modules instead
 - Follow PEP 8 conventions
 - Use type hints throughout
 - Keep functions focused and under 50 lines
 - Write comprehensive docstrings with Args/Returns sections
 - Maintain 90%+ test coverage
+- Prefer functional programming patterns
+- Use dataclasses only for pure data structures (no methods except __init__)
 
 ## Testing
 

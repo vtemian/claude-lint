@@ -64,56 +64,47 @@ If a file has no violations, include it with an empty violations array.
     return prompt
 
 
-class BatchProcessor:
-    """Processes files in batches."""
+def create_batches(items: list[Any], batch_size: int) -> list[list[Any]]:
+    """Split items into batches.
 
-    def __init__(self, batch_size: int):
-        """Initialize batch processor.
+    Args:
+        items: List of items to batch
+        batch_size: Number of items per batch
 
-        Args:
-            batch_size: Number of files per batch
-        """
-        self.batch_size = batch_size
+    Returns:
+        List of batches
+    """
+    batches = []
+    for i in range(0, len(items), batch_size):
+        batches.append(items[i:i + batch_size])
+    return batches
 
-    def create_batches(self, items: list[Any]) -> list[list[Any]]:
-        """Split items into batches.
 
-        Args:
-            items: List of items to batch
+def parse_response(response: str) -> list[dict[str, Any]]:
+    """Parse Claude API response to extract results.
 
-        Returns:
-            List of batches
-        """
-        batches = []
-        for i in range(0, len(items), self.batch_size):
-            batches.append(items[i:i + self.batch_size])
-        return batches
+    Args:
+        response: Raw response text from Claude
 
-    def parse_response(self, response: str) -> list[dict[str, Any]]:
-        """Parse Claude API response to extract results.
-
-        Args:
-            response: Raw response text from Claude
-
-        Returns:
-            List of file results with violations
-        """
-        # Extract JSON from markdown code blocks if present
-        json_match = re.search(r"```json\s*(.*?)\s*```", response, re.DOTALL)
+    Returns:
+        List of file results with violations
+    """
+    # Extract JSON from markdown code blocks if present
+    json_match = re.search(r"```json\s*(.*?)\s*```", response, re.DOTALL)
+    if json_match:
+        json_str = json_match.group(1)
+    else:
+        # Try to find JSON object directly
+        json_match = re.search(r"\{.*\}", response, re.DOTALL)
         if json_match:
-            json_str = json_match.group(1)
+            json_str = json_match.group(0)
         else:
-            # Try to find JSON object directly
-            json_match = re.search(r"\{.*\}", response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(0)
-            else:
-                logger.warning("No JSON found in response")
-                return []
-
-        try:
-            data = json.loads(json_str)
-            return data.get("results", [])
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON from response: {e}")
+            logger.warning("No JSON found in response")
             return []
+
+    try:
+        data = json.loads(json_str)
+        return data.get("results", [])
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse JSON from response: {e}")
+        return []

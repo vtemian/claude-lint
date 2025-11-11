@@ -13,87 +13,111 @@ class ProgressState:
     results: list[dict[str, Any]] = field(default_factory=list)
 
 
-class ProgressTracker:
-    """Tracks progress of file analysis for resume capability."""
+def create_progress_state(total_batches: int) -> ProgressState:
+    """Create a new progress state.
 
-    def __init__(self, progress_file: Path, total_batches: int):
-        """Initialize progress tracker.
+    Args:
+        total_batches: Total number of batches to process
 
-        Args:
-            progress_file: Path to progress file
-            total_batches: Total number of batches to process
-        """
-        self.progress_file = progress_file
-        self.total_batches = total_batches
-        self.state = ProgressState(total_batches=total_batches)
+    Returns:
+        New ProgressState
+    """
+    return ProgressState(total_batches=total_batches)
 
-    @property
-    def completed_batches(self) -> int:
-        """Get number of completed batches."""
-        return len(self.state.completed_batch_indices)
 
-    def update(self, batch_index: int, results: list[dict[str, Any]]) -> None:
-        """Update progress with batch results.
+def update_progress(
+    state: ProgressState,
+    batch_index: int,
+    results: list[dict[str, Any]]
+) -> ProgressState:
+    """Update progress with batch results.
 
-        Args:
-            batch_index: Index of completed batch
-            results: Results from this batch
-        """
-        if batch_index not in self.state.completed_batch_indices:
-            self.state.completed_batch_indices.append(batch_index)
+    Args:
+        state: Current progress state
+        batch_index: Index of completed batch
+        results: Results from this batch
 
-        self.state.results.extend(results)
+    Returns:
+        Updated progress state
+    """
+    if batch_index not in state.completed_batch_indices:
+        state.completed_batch_indices.append(batch_index)
 
-    def save(self) -> None:
-        """Save progress to file."""
-        data = asdict(self.state)
-        with open(self.progress_file, "w") as f:
-            json.dump(data, f, indent=2)
+    state.results.extend(results)
+    return state
 
-    @classmethod
-    def load(cls, progress_file: Path) -> "ProgressTracker":
-        """Load progress from file.
 
-        Args:
-            progress_file: Path to progress file
+def save_progress(state: ProgressState, progress_file: Path) -> None:
+    """Save progress to file.
 
-        Returns:
-            ProgressTracker with loaded state
-        """
-        with open(progress_file) as f:
-            data = json.load(f)
+    Args:
+        state: Progress state to save
+        progress_file: Path to progress file
+    """
+    data = asdict(state)
+    with open(progress_file, "w") as f:
+        json.dump(data, f, indent=2)
 
-        tracker = cls(progress_file, total_batches=data["total_batches"])
-        tracker.state = ProgressState(**data)
-        return tracker
 
-    def get_remaining_batch_indices(self) -> list[int]:
-        """Get list of batch indices that still need processing.
+def load_progress(progress_file: Path) -> ProgressState:
+    """Load progress from file.
 
-        Returns:
-            List of remaining batch indices
-        """
-        all_indices = set(range(self.total_batches))
-        completed = set(self.state.completed_batch_indices)
-        return sorted(all_indices - completed)
+    Args:
+        progress_file: Path to progress file
 
-    def is_complete(self) -> bool:
-        """Check if all batches are complete.
+    Returns:
+        ProgressState with loaded data
+    """
+    with open(progress_file) as f:
+        data = json.load(f)
 
-        Returns:
-            True if all batches processed
-        """
-        return len(self.state.completed_batch_indices) == self.total_batches
+    return ProgressState(**data)
 
-    def get_progress_percentage(self) -> float:
-        """Get progress as percentage.
 
-        Returns:
-            Progress percentage (0-100)
-        """
-        return (self.completed_batches / self.total_batches) * 100
+def get_remaining_batch_indices(state: ProgressState) -> list[int]:
+    """Get list of batch indices that still need processing.
 
-    def cleanup(self) -> None:
-        """Remove progress file."""
-        if self.progress_file.exists():
-            self.progress_file.unlink()
+    Args:
+        state: Current progress state
+
+    Returns:
+        List of remaining batch indices
+    """
+    all_indices = set(range(state.total_batches))
+    completed = set(state.completed_batch_indices)
+    return sorted(all_indices - completed)
+
+
+def is_progress_complete(state: ProgressState) -> bool:
+    """Check if all batches are complete.
+
+    Args:
+        state: Current progress state
+
+    Returns:
+        True if all batches processed
+    """
+    return len(state.completed_batch_indices) == state.total_batches
+
+
+def get_progress_percentage(state: ProgressState) -> float:
+    """Get progress as percentage.
+
+    Args:
+        state: Current progress state
+
+    Returns:
+        Progress percentage (0-100)
+    """
+    completed_batches = len(state.completed_batch_indices)
+    return (completed_batches / state.total_batches) * 100
+
+
+def cleanup_progress(progress_file: Path) -> None:
+    """Remove progress file.
+
+    Args:
+        progress_file: Path to progress file
+    """
+    if progress_file.exists():
+        progress_file.unlink()

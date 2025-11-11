@@ -4,8 +4,8 @@ from pathlib import Path
 import click
 
 from claude_lint.config import load_config
-from claude_lint.orchestrator import Orchestrator
-from claude_lint.reporter import Reporter, format_detailed_report, format_json_report
+from claude_lint.orchestrator import run_compliance_check
+from claude_lint.reporter import get_exit_code, format_detailed_report, format_json_report
 
 
 @click.command()
@@ -45,9 +45,10 @@ def main(full, diff, working, staged, output_json, config):
     cfg = load_config(config_path)
 
     try:
-        # Run orchestrator
-        orchestrator = Orchestrator(project_root, cfg)
-        results = orchestrator.run(mode=mode, base_branch=base_branch)
+        # Run compliance check
+        results = run_compliance_check(
+            project_root, cfg, mode=mode, base_branch=base_branch
+        )
 
         # Format output
         if output_json:
@@ -58,9 +59,8 @@ def main(full, diff, working, staged, output_json, config):
         click.echo(output)
 
         # Exit with appropriate code
-        reporter = Reporter()
-        exit_code = reporter.get_exit_code(results)
-        sys.exit(exit_code)
+        exit_code_val = get_exit_code(results)
+        sys.exit(exit_code_val)
 
     except Exception as e:
         click.echo(f"Error: {e}", err=True)

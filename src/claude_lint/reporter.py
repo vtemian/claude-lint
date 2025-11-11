@@ -70,37 +70,35 @@ def format_json_report(results: list[dict[str, Any]]) -> str:
     return json.dumps(report, indent=2)
 
 
-class Reporter:
-    """Handles result reporting and output."""
+def get_exit_code(results: list[dict[str, Any]]) -> int:
+    """Get exit code based on results.
 
-    def get_exit_code(self, results: list[dict[str, Any]]) -> int:
-        """Get exit code based on results.
+    Args:
+        results: List of file results
 
-        Args:
-            results: List of file results
+    Returns:
+        0 if no violations, 1 if violations found
+    """
+    has_violations = any(r["violations"] for r in results)
+    return 1 if has_violations else 0
 
-        Returns:
-            0 if no violations, 1 if violations found
-        """
-        has_violations = any(r["violations"] for r in results)
-        return 1 if has_violations else 0
 
-    def get_summary(self, results: list[dict[str, Any]]) -> dict[str, int]:
-        """Get summary statistics.
+def get_summary(results: list[dict[str, Any]]) -> dict[str, int]:
+    """Get summary statistics.
 
-        Args:
-            results: List of file results
+    Args:
+        results: List of file results
 
-        Returns:
-            Dict with summary counts
-        """
-        total_files = len(results)
-        files_with_violations = sum(1 for r in results if r["violations"])
-        total_violations = sum(len(r["violations"]) for r in results)
+    Returns:
+        Dict with summary counts
+    """
+    total_files = len(results)
+    files_with_violations = sum(1 for r in results if r["violations"])
+    total_violations = sum(len(r["violations"]) for r in results)
 
-        return {
-            "total_files": total_files,
-            "files_with_violations": files_with_violations,
-            "clean_files": total_files - files_with_violations,
-            "total_violations": total_violations
-        }
+    return {
+        "total_files": total_files,
+        "files_with_violations": files_with_violations,
+        "clean_files": total_files - files_with_violations,
+        "total_violations": total_violations
+    }

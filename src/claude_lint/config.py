@@ -13,15 +13,19 @@ class Config:
     batch_size: int
     api_key: Optional[str] = None
 
-    @classmethod
-    def defaults(cls) -> "Config":
-        """Return default configuration."""
-        return cls(
-            include=["**/*.py", "**/*.js", "**/*.ts"],
-            exclude=["node_modules/**", "dist/**", ".git/**"],
-            batch_size=10,
-            api_key=None
-        )
+
+def get_default_config() -> Config:
+    """Return default configuration.
+
+    Returns:
+        Config with default values
+    """
+    return Config(
+        include=["**/*.py", "**/*.js", "**/*.ts"],
+        exclude=["node_modules/**", "dist/**", ".git/**"],
+        batch_size=10,
+        api_key=None
+    )
 
 
 def load_config(config_path: Path) -> Config:
@@ -34,12 +38,12 @@ def load_config(config_path: Path) -> Config:
         Config object with loaded or default values
     """
     if not config_path.exists():
-        return Config.defaults()
+        return get_default_config()
 
     with open(config_path) as f:
         data = json.load(f)
 
-    defaults = Config.defaults()
+    defaults = get_default_config()
 
     return Config(
         include=data.get("include", defaults.include),

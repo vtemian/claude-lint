@@ -6,8 +6,8 @@ import pytest
 from claude_lint.cli import main
 
 
-@patch("claude_lint.cli.Orchestrator")
-def test_cli_full_scan(mock_orchestrator):
+@patch("claude_lint.cli.run_compliance_check")
+def test_cli_full_scan(mock_run_check):
     """Test CLI with full scan."""
     runner = CliRunner()
 
@@ -16,12 +16,10 @@ def test_cli_full_scan(mock_orchestrator):
         Path(".agent-lint.json").write_text('{"include": ["**/*.py"]}')
         Path("CLAUDE.md").write_text("# Guidelines")
 
-        # Mock orchestrator
-        mock_orch = Mock()
-        mock_orch.run.return_value = [
+        # Mock compliance check
+        mock_run_check.return_value = [
             {"file": "test.py", "violations": []}
         ]
-        mock_orchestrator.return_value = mock_orch
 
         # Run CLI
         result = runner.invoke(main, ["--full"])
@@ -30,8 +28,8 @@ def test_cli_full_scan(mock_orchestrator):
         assert "test.py" in result.output
 
 
-@patch("claude_lint.cli.Orchestrator")
-def test_cli_diff_mode(mock_orchestrator):
+@patch("claude_lint.cli.run_compliance_check")
+def test_cli_diff_mode(mock_run_check):
     """Test CLI with diff mode."""
     runner = CliRunner()
 
@@ -39,20 +37,18 @@ def test_cli_diff_mode(mock_orchestrator):
         Path(".agent-lint.json").write_text('{}')
         Path("CLAUDE.md").write_text("# Guidelines")
 
-        mock_orch = Mock()
-        mock_orch.run.return_value = []
-        mock_orchestrator.return_value = mock_orch
+        mock_run_check.return_value = []
 
         result = runner.invoke(main, ["--diff", "main"])
 
-        assert mock_orch.run.called
-        call_args = mock_orch.run.call_args
+        assert mock_run_check.called
+        call_args = mock_run_check.call_args
         assert call_args[1]["mode"] == "diff"
         assert call_args[1]["base_branch"] == "main"
 
 
-@patch("claude_lint.cli.Orchestrator")
-def test_cli_json_output(mock_orchestrator):
+@patch("claude_lint.cli.run_compliance_check")
+def test_cli_json_output(mock_run_check):
     """Test CLI with JSON output format."""
     runner = CliRunner()
 
@@ -60,11 +56,9 @@ def test_cli_json_output(mock_orchestrator):
         Path(".agent-lint.json").write_text('{}')
         Path("CLAUDE.md").write_text("# Guidelines")
 
-        mock_orch = Mock()
-        mock_orch.run.return_value = [
+        mock_run_check.return_value = [
             {"file": "test.py", "violations": []}
         ]
-        mock_orchestrator.return_value = mock_orch
 
         result = runner.invoke(main, ["--full", "--json"])
 
@@ -73,8 +67,8 @@ def test_cli_json_output(mock_orchestrator):
         assert '"summary"' in result.output
 
 
-@patch("claude_lint.cli.Orchestrator")
-def test_cli_exit_code_on_violations(mock_orchestrator):
+@patch("claude_lint.cli.run_compliance_check")
+def test_cli_exit_code_on_violations(mock_run_check):
     """Test CLI returns exit code 1 when violations found."""
     runner = CliRunner()
 
@@ -82,14 +76,12 @@ def test_cli_exit_code_on_violations(mock_orchestrator):
         Path(".agent-lint.json").write_text('{}')
         Path("CLAUDE.md").write_text("# Guidelines")
 
-        mock_orch = Mock()
-        mock_orch.run.return_value = [
+        mock_run_check.return_value = [
             {
                 "file": "test.py",
                 "violations": [{"type": "error", "message": "bad", "line": None}]
             }
         ]
-        mock_orchestrator.return_value = mock_orch
 
         result = runner.invoke(main, ["--full"])
 

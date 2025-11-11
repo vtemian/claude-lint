@@ -1,14 +1,6 @@
 from unittest.mock import Mock, patch
 import pytest
-from claude_lint.api_client import ClaudeClient
-
-
-@patch("claude_lint.api_client.Anthropic")
-def test_claude_client_initialization(mock_anthropic):
-    """Test initializing Claude API client."""
-    client = ClaudeClient(api_key="test-key")
-
-    mock_anthropic.assert_called_once_with(api_key="test-key")
+from claude_lint.api_client import analyze_files, get_usage_stats
 
 
 @patch("claude_lint.api_client.Anthropic")
@@ -19,13 +11,15 @@ def test_analyze_with_caching(mock_anthropic):
     mock_response.content = [Mock(text='{"results": []}')]
     mock_anthropic.return_value.messages.create.return_value = mock_response
 
-    client = ClaudeClient(api_key="test-key")
-
     # Make request
-    response = client.analyze_files(
+    response_text, response_obj = analyze_files(
+        api_key="test-key",
         guidelines="# Guidelines",
         prompt="Check these files"
     )
+
+    # Verify API client was initialized
+    mock_anthropic.assert_called_once_with(api_key="test-key")
 
     # Verify caching was used
     call_args = mock_anthropic.return_value.messages.create.call_args
@@ -45,6 +39,10 @@ def test_analyze_with_caching(mock_anthropic):
     assert messages[0]["role"] == "user"
     assert messages[0]["content"] == "Check these files"
 
+    # Check response
+    assert response_text == '{"results": []}'
+    assert response_obj == mock_response
+
 
 @patch("claude_lint.api_client.Anthropic")
 def test_get_usage_stats(mock_anthropic):
@@ -59,25 +57,15 @@ def test_get_usage_stats(mock_anthropic):
     )
     mock_anthropic.return_value.messages.create.return_value = mock_response
 
-    client = ClaudeClient(api_key="test-key")
-    response = client.analyze_files(
+    response_text, response_obj = analyze_files(
+        api_key="test-key",
         guidelines="# Guidelines",
         prompt="Check files"
     )
 
-    stats = client.get_last_usage_stats()
+    stats = get_usage_stats(response_obj)
 
     assert stats["input_tokens"] == 100
     assert stats["output_tokens"] == 50
     assert stats["cache_creation_tokens"] == 200
     assert stats["cache_read_tokens"] == 0
-
-
-@patch("claude_lint.api_client.Anthropic")
-def test_get_usage_stats_no_request(mock_anthropic):
-    """Test get_last_usage_stats returns None when no request has been made."""
-    client = ClaudeClient(api_key="test-key")
-
-    stats = client.get_last_usage_stats()
-
-    assert stats is None

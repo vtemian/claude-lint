@@ -1,6 +1,11 @@
 import json
 import pytest
-from claude_lint.reporter import Reporter, format_detailed_report, format_json_report
+from claude_lint.reporter import (
+    get_exit_code,
+    get_summary,
+    format_detailed_report,
+    format_json_report
+)
 
 
 def test_format_detailed_report():
@@ -64,18 +69,16 @@ def test_format_json_report():
 
 def test_reporter_get_exit_code():
     """Test getting exit code based on results."""
-    reporter = Reporter()
-
     # No violations
     clean_results = [{"file": "a.py", "violations": []}]
-    assert reporter.get_exit_code(clean_results) == 0
+    assert get_exit_code(clean_results) == 0
 
     # Has violations
     dirty_results = [
         {"file": "a.py", "violations": []},
         {"file": "b.py", "violations": [{"type": "error", "message": "bad"}]}
     ]
-    assert reporter.get_exit_code(dirty_results) == 1
+    assert get_exit_code(dirty_results) == 1
 
 
 def test_reporter_print_summary():
@@ -89,8 +92,7 @@ def test_reporter_print_summary():
         ]}
     ]
 
-    reporter = Reporter()
-    summary = reporter.get_summary(results)
+    summary = get_summary(results)
 
     assert summary["total_files"] == 3
     assert summary["files_with_violations"] == 2
