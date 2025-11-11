@@ -34,7 +34,9 @@ Create `.agent-lint.json` in your project root:
 {
   "include": ["**/*.py", "**/*.js", "**/*.ts"],
   "exclude": ["node_modules/**", "dist/**", "*.test.js"],
-  "batchSize": 10
+  "batch_size": 10,
+  "max_file_size_mb": 1.0,
+  "model": "claude-sonnet-4-5-20250929"
 }
 ```
 
@@ -44,14 +46,16 @@ Set your Anthropic API key:
 export ANTHROPIC_API_KEY="your-api-key"
 ```
 
-Or specify in config:
+Or specify in config (snake_case or camelCase):
 
 ```json
 {
-  "apiKey": "your-api-key",
+  "api_key": "your-api-key",
   ...
 }
 ```
+
+All configuration keys are optional. Snake_case is preferred, but camelCase is also supported for backwards compatibility.
 
 ## Usage
 

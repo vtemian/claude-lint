@@ -35,6 +35,8 @@ def get_default_config() -> Config:
 def load_config(config_path: Path) -> Config:
     """Load configuration from file or return defaults.
 
+    Supports both snake_case (preferred) and camelCase (backwards compat) keys.
+
     Args:
         config_path: Path to .agent-lint.json file
 
@@ -52,8 +54,12 @@ def load_config(config_path: Path) -> Config:
     return Config(
         include=data.get("include", defaults.include),
         exclude=data.get("exclude", defaults.exclude),
-        batch_size=data.get("batchSize", defaults.batch_size),
+        # Support both snake_case and camelCase
+        batch_size=data.get("batch_size", data.get("batchSize", defaults.batch_size)),
         model=data.get("model", defaults.model),
-        max_file_size_mb=data.get("maxFileSizeMb", defaults.max_file_size_mb),
-        api_key=data.get("apiKey")
+        max_file_size_mb=data.get(
+            "max_file_size_mb",
+            data.get("maxFileSizeMb", defaults.max_file_size_mb)
+        ),
+        api_key=data.get("api_key", data.get("apiKey"))
     )
