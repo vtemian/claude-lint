@@ -4,6 +4,8 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any, Optional
 
+from claude_lint.file_utils import atomic_write_json
+
 
 @dataclass
 class ProgressState:
@@ -48,15 +50,14 @@ def update_progress(
 
 
 def save_progress(state: ProgressState, progress_file: Path) -> None:
-    """Save progress to file.
+    """Save progress to file atomically.
 
     Args:
         state: Progress state to save
         progress_file: Path to progress file
     """
     data = asdict(state)
-    with open(progress_file, "w") as f:
-        json.dump(data, f, indent=2)
+    atomic_write_json(data, progress_file)
 
 
 def load_progress(progress_file: Path) -> ProgressState:

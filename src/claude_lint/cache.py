@@ -4,6 +4,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Optional, Any
 
+from claude_lint.file_utils import atomic_write_json
+
 
 @dataclass
 class CacheEntry:
@@ -50,7 +52,7 @@ def load_cache(cache_path: Path) -> Cache:
 
 
 def save_cache(cache: Cache, cache_path: Path) -> None:
-    """Save cache to file.
+    """Save cache to file atomically.
 
     Args:
         cache: Cache object to save
@@ -65,5 +67,4 @@ def save_cache(cache: Cache, cache_path: Path) -> None:
         "entries": entries_dict
     }
 
-    with open(cache_path, "w") as f:
-        json.dump(data, f, indent=2)
+    atomic_write_json(data, cache_path)
