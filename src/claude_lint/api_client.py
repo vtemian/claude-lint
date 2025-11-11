@@ -3,13 +3,19 @@ from typing import Optional, Any
 from anthropic import Anthropic, APIError, APIConnectionError, RateLimitError
 
 
-def analyze_files(api_key: str, guidelines: str, prompt: str) -> tuple[str, Any]:
+def analyze_files(
+    api_key: str,
+    guidelines: str,
+    prompt: str,
+    model: str = "claude-sonnet-4-5-20250929"
+) -> tuple[str, Any]:
     """Analyze files using Claude API with cached guidelines.
 
     Args:
         api_key: Anthropic API key
         guidelines: CLAUDE.md content (will be cached)
         prompt: Prompt with files to analyze
+        model: Claude model to use
 
     Returns:
         Tuple of (response text, response object)
@@ -29,7 +35,7 @@ def analyze_files(api_key: str, guidelines: str, prompt: str) -> tuple[str, Any]
     # Use prompt caching for guidelines
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-5-20250929",
+            model=model,
             max_tokens=4096,
             system=[
                 {

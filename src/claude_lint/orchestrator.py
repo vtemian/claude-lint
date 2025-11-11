@@ -115,7 +115,9 @@ def run_compliance_check(
 
         # Make API call with retry
         def api_call():
-            response_text, response_obj = analyze_files(api_key, guidelines, prompt)
+            response_text, response_obj = analyze_files(
+                api_key, guidelines, prompt, model=config.model
+            )
             return response_text
 
         response = retry_with_backoff(api_call)

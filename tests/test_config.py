@@ -42,3 +42,22 @@ def test_load_config_missing_file():
 
     assert config.include == ["**/*.py", "**/*.js", "**/*.ts"]
     assert config.batch_size == 10
+
+
+def test_config_model_default():
+    """Test default model configuration."""
+    from claude_lint.config import get_default_config
+    config = get_default_config()
+    assert config.model == "claude-sonnet-4-5-20250929"
+
+
+def test_load_config_with_model():
+    """Test loading config with custom model."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_file = Path(tmpdir) / ".agent-lint.json"
+        config_file.write_text(json.dumps({
+            "model": "claude-opus-4-5-20250929"
+        }))
+
+        config = load_config(config_file)
+        assert config.model == "claude-opus-4-5-20250929"

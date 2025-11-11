@@ -11,6 +11,7 @@ class Config:
     include: list[str]
     exclude: list[str]
     batch_size: int
+    model: str = "claude-sonnet-4-5-20250929"
     api_key: Optional[str] = None
 
 
@@ -24,6 +25,7 @@ def get_default_config() -> Config:
         include=["**/*.py", "**/*.js", "**/*.ts"],
         exclude=["node_modules/**", "dist/**", ".git/**"],
         batch_size=10,
+        model="claude-sonnet-4-5-20250929",
         api_key=None
     )
 
@@ -49,5 +51,6 @@ def load_config(config_path: Path) -> Config:
         include=data.get("include", defaults.include),
         exclude=data.get("exclude", defaults.exclude),
         batch_size=data.get("batchSize", defaults.batch_size),
+        model=data.get("model", defaults.model),
         api_key=data.get("apiKey")
     )

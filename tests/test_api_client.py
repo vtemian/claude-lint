@@ -81,3 +81,24 @@ def test_analyze_files_does_not_catch_keyboard_interrupt(mock_anthropic):
 
     with pytest.raises(KeyboardInterrupt):
         analyze_files("key", "guidelines", "prompt")
+
+
+@patch("claude_lint.api_client.Anthropic")
+def test_analyze_files_with_custom_model(mock_anthropic):
+    """Test using a custom Claude model."""
+    # Setup mock
+    mock_response = Mock()
+    mock_response.content = [Mock(text='{"results": []}')]
+    mock_anthropic.return_value.messages.create.return_value = mock_response
+
+    # Make request with custom model
+    response_text, response_obj = analyze_files(
+        api_key="test-key",
+        guidelines="# Guidelines",
+        prompt="Check these files",
+        model="claude-opus-4-5-20250929"
+    )
+
+    # Verify custom model was used
+    call_args = mock_anthropic.return_value.messages.create.call_args
+    assert call_args[1]["model"] == "claude-opus-4-5-20250929"
