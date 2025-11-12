@@ -4,7 +4,7 @@
 
 **Goal:** Build a Python CLI tool that checks project files for compliance with CLAUDE.md guidelines using Claude API with prompt caching.
 
-**Architecture:** Smart change detection with git integration, batched file processing (10-15 files per API call), persistent caching for results and CLAUDE.md hash, retry logic with exponential backoff, and resumable progress tracking.
+**Architecture:** Smart change detection with git integration, batched file processing (default 10 files per API call, configurable up to 100), persistent caching for results and CLAUDE.md hash, retry logic with exponential backoff, and resumable progress tracking.
 
 **Tech Stack:** Python 3.11+, anthropic SDK, GitPython, click (CLI), pytest
 
@@ -2844,7 +2844,7 @@ Claude-lint returns exit code 0 for clean scans and 1 when violations are found:
 
 1. **File Collection**: Gathers files based on mode (full/diff/working/staged) and include/exclude patterns
 2. **Cache Check**: Skips files that haven't changed since last scan
-3. **Batch Processing**: Groups files into batches (default 10-15)
+3. **Batch Processing**: Groups files into batches (default 10, configurable up to 100)
 4. **API Analysis**: Sends batches to Claude API with cached CLAUDE.md in system prompt
 5. **Result Parsing**: Extracts violations from Claude's analysis
 6. **Caching**: Stores results and file hashes for future runs

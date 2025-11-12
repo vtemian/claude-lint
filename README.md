@@ -112,7 +112,7 @@ Claude-lint returns exit code 0 for clean scans and 1 when violations are found:
 
 1. **File Collection**: Gathers files based on mode (full/diff/working/staged) and include/exclude patterns
 2. **Cache Check**: Skips files that haven't changed since last scan
-3. **Batch Processing**: Groups files into batches (default 10-15)
+3. **Batch Processing**: Groups files into batches (default 10, configurable up to 100)
 4. **API Analysis**: Sends batches to Claude API with cached CLAUDE.md in system prompt
 5. **Result Parsing**: Extracts violations from Claude's analysis
 6. **Caching**: Stores results and file hashes for future runs
