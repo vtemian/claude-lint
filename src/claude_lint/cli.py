@@ -32,6 +32,24 @@ def main(
     config: str | None,
 ) -> None:
     """Claude-lint: CLAUDE.md compliance checker."""
+    try:
+        _run_main(full, diff, working, staged, output_json, verbose, quiet, config)
+    except KeyboardInterrupt:
+        click.echo("\nOperation cancelled by user", err=True)
+        sys.exit(130)  # Standard SIGINT exit code
+
+
+def _run_main(
+    full: bool,
+    diff: str | None,
+    working: bool,
+    staged: bool,
+    output_json: bool,
+    verbose: bool,
+    quiet: bool,
+    config: str | None,
+) -> None:
+    """Internal main logic - extracted for KeyboardInterrupt handling."""
     # Setup logging
     setup_logging(verbose=verbose, quiet=quiet)
     # Determine mode
@@ -80,9 +98,8 @@ def main(
         sys.exit(exit_code_val)
 
     except KeyboardInterrupt:
-        # User cancelled with Ctrl-C
-        click.echo("\nOperation cancelled by user", err=True)
-        sys.exit(130)  # Standard SIGINT exit code
+        # Re-raise to be caught by main()
+        raise
     except (ValueError, FileNotFoundError) as e:
         # Expected errors with helpful messages
         click.echo(f"Error: {e}", err=True)

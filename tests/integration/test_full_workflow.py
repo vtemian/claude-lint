@@ -61,6 +61,10 @@ def test_full_scan_without_api_key(test_project, monkeypatch):
 
 def test_keyboard_interrupt_handling(test_project):
     """Test that Ctrl-C is handled gracefully."""
+    # Provide fake API key so process runs long enough to be interrupted
+    env = os.environ.copy()
+    env["ANTHROPIC_API_KEY"] = "sk-ant-api01-" + "x" * 90
+
     # Start process
     proc = subprocess.Popen(
         ["uv", "run", "claude-lint", "--full"],
@@ -68,6 +72,7 @@ def test_keyboard_interrupt_handling(test_project):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        env=env,
     )
 
     # Wait a moment then interrupt
