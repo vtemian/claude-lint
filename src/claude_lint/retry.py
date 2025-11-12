@@ -1,4 +1,5 @@
 """Retry logic with exponential backoff."""
+import random
 import time
 from typing import Callable, TypeVar
 from claude_lint.logging_config import get_logger
@@ -13,7 +14,10 @@ def retry_with_backoff(
     initial_delay: float = 1.0,
     backoff_factor: float = 2.0
 ) -> T:
-    """Retry a function with exponential backoff.
+    """Retry a function with exponential backoff and jitter.
+
+    Uses jitter to prevent thundering herd problem when multiple
+    clients retry simultaneously.
 
     Args:
         func: Function to retry
@@ -44,11 +48,14 @@ def retry_with_backoff(
             last_exception = e
 
             if attempt < max_retries - 1:  # Don't sleep on last attempt
+                # Add jitter: random value between 0.5x and 1.5x the delay
+                jittered_delay = delay * (0.5 + random.random())
+
                 logger.debug(
                     f"Attempt {attempt + 1}/{max_retries} failed with "
-                    f"{type(e).__name__}: {e}. Retrying in {delay:.1f}s..."
+                    f"{type(e).__name__}: {e}. Retrying in {jittered_delay:.1f}s..."
                 )
-                time.sleep(delay)
+                time.sleep(jittered_delay)
                 delay *= backoff_factor
             else:
                 logger.debug(

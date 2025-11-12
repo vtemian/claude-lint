@@ -39,7 +39,7 @@ def test_retry_exhausted():
 
 
 def test_exponential_backoff_timing():
-    """Test that backoff delays increase exponentially."""
+    """Test that backoff delays increase exponentially with jitter."""
     import time
 
     call_times = []
@@ -57,8 +57,12 @@ def test_exponential_backoff_timing():
     delay1 = call_times[1] - call_times[0]
     delay2 = call_times[2] - call_times[1]
 
-    # Second delay should be roughly 2x first delay
-    assert delay2 > delay1 * 1.8  # Account for timing variance
+    # With jitter (0.5x to 1.5x), delays should be:
+    # delay1: 0.1 * (0.5-1.5) = 0.05-0.15
+    # delay2: 0.2 * (0.5-1.5) = 0.10-0.30
+    # Check that delays are in reasonable ranges with jitter
+    assert 0.05 <= delay1 <= 0.15, f"delay1 {delay1} outside expected range"
+    assert 0.10 <= delay2 <= 0.30, f"delay2 {delay2} outside expected range"
 
 
 def test_retry_logs_attempts(caplog):
@@ -97,3 +101,48 @@ def test_retry_logs_attempts(caplog):
     finally:
         # Restore original level
         retry_logger.setLevel(original_level)
+
+
+def test_retry_uses_jitter():
+    """Test that retry delays include jitter to prevent thundering herd."""
+    import time
+
+    attempt_count = 0
+    sleep_times = []
+
+    def flaky_function():
+        nonlocal attempt_count
+        attempt_count += 1
+        if attempt_count < 4:
+            raise RuntimeError("Fail")
+        return "success"
+
+    # Monkey-patch time.sleep to capture delays
+    original_sleep = time.sleep
+    def mock_sleep(duration):
+        sleep_times.append(duration)
+        # Don't actually sleep in test
+
+    time.sleep = mock_sleep
+    try:
+        retry_with_backoff(flaky_function, max_retries=4, initial_delay=1.0)
+    finally:
+        time.sleep = original_sleep
+
+    # Should have 3 sleeps (first attempt doesn't sleep)
+    assert len(sleep_times) == 3
+
+    # First check: no delay should be exactly the base delay (would indicate no jitter)
+    base_delays = [1.0, 2.0, 4.0]
+    for i, delay in enumerate(sleep_times):
+        assert delay != base_delays[i], \
+            f"Delay {i} is exactly {base_delays[i]} - no jitter applied!"
+
+    # Second check: delays should be within jitter range
+    # Base: 1.0, 2.0, 4.0 but with ±50% jitter
+    for i, delay in enumerate(sleep_times):
+        base_delay = 1.0 * (2.0 ** i)
+        min_delay = base_delay * 0.5
+        max_delay = base_delay * 1.5
+        assert min_delay <= delay <= max_delay, \
+            f"Delay {delay} not in range [{min_delay}, {max_delay}]"
