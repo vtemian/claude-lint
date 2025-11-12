@@ -12,7 +12,7 @@ from claude_lint.reporter import format_detailed_report, format_json_report, get
 
 
 @click.command()
-@click.version_option(version=__version__, prog_name="claude-lint")
+@click.version_option(version=__version__, prog_name="lint-claude")
 @click.option("--full", is_flag=True, help="Full project scan")
 @click.option("--diff", type=str, help="Check files changed from branch")
 @click.option("--working", is_flag=True, help="Check working directory changes")
