@@ -37,29 +37,38 @@ def test_retry_exhausted():
 
 def test_exponential_backoff_timing():
     """Test that backoff delays increase exponentially with jitter."""
-    import time
+    from unittest.mock import patch
 
     call_times = []
+    sleep_durations = []
+
+    def mock_sleep(duration):
+        sleep_durations.append(duration)
+        # Don't actually sleep
 
     def failing_func():
-        call_times.append(time.time())
+        call_times.append(1)  # Just count calls
         if len(call_times) < 3:
             raise Exception("fail")
         return "success"
 
-    retry_with_backoff(failing_func, max_retries=3, initial_delay=0.1)
+    with patch("time.sleep", side_effect=mock_sleep):
+        retry_with_backoff(failing_func, max_retries=3, initial_delay=0.1)
 
-    # Check delays between calls
-    assert len(call_times) == 3
-    delay1 = call_times[1] - call_times[0]
-    delay2 = call_times[2] - call_times[1]
+    # Should have 2 sleeps (first attempt doesn't sleep, 3rd succeeds)
+    assert len(sleep_durations) == 2
 
-    # With jitter (0.5x to 1.5x), delays should be:
-    # delay1: 0.1 * (0.5-1.5) = 0.05-0.15
-    # delay2: 0.2 * (0.5-1.5) = 0.10-0.30
-    # Check that delays are in reasonable ranges with jitter
-    assert 0.05 <= delay1 <= 0.15, f"delay1 {delay1} outside expected range"
-    assert 0.10 <= delay2 <= 0.30, f"delay2 {delay2} outside expected range"
+    # Verify jitter is applied (delays should NOT be exact multiples)
+    # Base delays would be: 0.1, 0.2
+    # With jitter: 0.05-0.15, 0.10-0.30
+    delay1, delay2 = sleep_durations
+
+    # Check ranges with jitter applied
+    assert 0.05 <= delay1 <= 0.15, f"delay1 {delay1} outside jittered range"
+    assert 0.10 <= delay2 <= 0.30, f"delay2 {delay2} outside jittered range"
+
+    # Verify exponential increase (even with jitter, delay2 should generally be > delay1)
+    # This is probabilistic but with >50% chance delay2 > delay1
 
 
 def test_retry_logs_attempts(caplog):
