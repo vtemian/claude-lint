@@ -25,7 +25,12 @@ def is_git_repo(path: Path) -> bool:
             timeout=GIT_TIMEOUT,
         )
         return True
-    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+    except (
+        subprocess.CalledProcessError,
+        FileNotFoundError,
+        NotADirectoryError,
+        subprocess.TimeoutExpired,
+    ):
         return False
 
 
