@@ -13,7 +13,7 @@
 uv sync
 
 # Run the tool
-uvx claude-lint --help
+uvx lint-claude --help
 ```
 
 ## Development Setup
