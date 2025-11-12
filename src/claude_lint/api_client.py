@@ -1,18 +1,22 @@
 """Claude API client with prompt caching support."""
 from typing import Any
-from anthropic import Anthropic, APIError, APIConnectionError, RateLimitError
+from anthropic import Anthropic, APIError, APIConnectionError, RateLimitError, APITimeoutError
+from claude_lint.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
-def create_client(api_key: str) -> Anthropic:
-    """Create Anthropic client.
+def create_client(api_key: str, timeout: float = 60.0) -> Anthropic:
+    """Create Anthropic client with timeout.
 
     Args:
         api_key: Anthropic API key
+        timeout: Request timeout in seconds (default: 60)
 
     Returns:
-        Anthropic client instance
+        Anthropic client instance configured with timeout
     """
-    return Anthropic(api_key=api_key)
+    return Anthropic(api_key=api_key, timeout=timeout)
 
 
 def analyze_files_with_client(
@@ -61,8 +65,17 @@ def analyze_files_with_client(
                 }
             ]
         )
-    except (APIError, APIConnectionError, RateLimitError):
-        # Re-raise specific API errors as-is
+    except APITimeoutError as e:
+        logger.error(f"API request timed out: {e}")
+        raise
+    except RateLimitError as e:
+        logger.warning(f"Rate limit exceeded: {e}")
+        raise
+    except APIConnectionError as e:
+        logger.error(f"API connection failed: {e}")
+        raise
+    except APIError as e:
+        logger.error(f"API error: {e}")
         raise
     except (KeyboardInterrupt, SystemExit):
         # Never catch these
