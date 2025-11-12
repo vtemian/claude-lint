@@ -1,6 +1,6 @@
 """Claude API client with prompt caching support."""
-from typing import Any
 from anthropic import Anthropic, APIError, APIConnectionError, RateLimitError, APITimeoutError
+from anthropic.types import Message
 from claude_lint.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -24,7 +24,7 @@ def analyze_files_with_client(
     guidelines: str,
     prompt: str,
     model: str = "claude-sonnet-4-5-20250929"
-) -> tuple[str, Any]:
+) -> tuple[str, Message]:
     """Analyze files using existing Claude API client.
 
     Args:
@@ -34,11 +34,11 @@ def analyze_files_with_client(
         model: Claude model to use
 
     Returns:
-        Tuple of (response text, response object)
+        Tuple of (response text, Message object)
 
     Raises:
         ValueError: If guidelines or prompt are empty or invalid
-        APIError: If API call fails (includes connection, rate limit, etc.)
+        APIError: If API call fails (includes connection, rate limit, timeout, etc.)
     """
     # Input validation
     if not guidelines or not isinstance(guidelines, str) or not guidelines.strip():
@@ -99,7 +99,7 @@ def analyze_files(
     guidelines: str,
     prompt: str,
     model: str = "claude-sonnet-4-5-20250929"
-) -> tuple[str, Any]:
+) -> tuple[str, Message]:
     """Analyze files using Claude API with cached guidelines.
 
     Convenience wrapper that creates client and makes call.
@@ -112,7 +112,7 @@ def analyze_files(
         model: Claude model to use
 
     Returns:
-        Tuple of (response text, response object)
+        Tuple of (response text, Message object)
 
     Raises:
         ValueError: If guidelines or prompt are empty or invalid
@@ -122,11 +122,11 @@ def analyze_files(
     return analyze_files_with_client(client, guidelines, prompt, model)
 
 
-def get_usage_stats(response: Any) -> dict:
+def get_usage_stats(response: Message) -> dict[str, int]:
     """Get usage statistics from API response.
 
     Args:
-        response: Response object from Claude API
+        response: Message object from Claude API
 
     Returns:
         Dict with token usage stats

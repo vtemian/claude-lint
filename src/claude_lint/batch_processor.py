@@ -1,6 +1,7 @@
 """Batch processing logic."""
 from pathlib import Path
 from typing import Any
+from anthropic import Anthropic
 from claude_lint.api_client import analyze_files_with_client
 from claude_lint.cache import Cache, CacheEntry
 from claude_lint.collector import compute_file_hash
@@ -21,7 +22,7 @@ def process_batch(
     config: Config,
     guidelines: str,
     guidelines_hash: str,
-    client: Any,
+    client: Anthropic,
     rate_limiter: RateLimiter,
     cache: Cache
 ) -> list[dict[str, Any]]:
