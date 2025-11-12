@@ -148,4 +148,4 @@ def test_version_flag():
 
     assert result.returncode == 0
     assert "claude-lint" in result.stdout
-    assert "0.2.0" in result.stdout
+    assert "0.3.0" in result.stdout
