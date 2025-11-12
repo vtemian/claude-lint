@@ -98,3 +98,111 @@ def test_analyze_files_with_custom_model(mock_anthropic):
     # Verify custom model was used
     call_args = mock_anthropic.return_value.messages.create.call_args
     assert call_args[1]["model"] == "claude-opus-4-5-20250929"
+
+
+def test_analyze_files_handles_timeout_error():
+    """Test that APITimeoutError is logged and re-raised."""
+    from anthropic import APITimeoutError
+
+    # Create a mock request for the exception
+    mock_request = Mock()
+    mock_request.url = "https://api.anthropic.com/v1/messages"
+
+    mock_client = Mock()
+    mock_client.messages.create.side_effect = APITimeoutError(mock_request)
+
+    with patch("claude_lint.api_client.logger") as mock_logger:
+        with pytest.raises(APITimeoutError):
+            from claude_lint.api_client import analyze_files_with_client
+
+            analyze_files_with_client(
+                mock_client,
+                "# Guidelines",
+                "Check this code",
+            )
+
+        # Verify error was logged
+        mock_logger.error.assert_called_once()
+        assert "timed out" in mock_logger.error.call_args[0][0]
+
+
+def test_analyze_files_handles_rate_limit_error():
+    """Test that RateLimitError is logged and re-raised."""
+    from anthropic import RateLimitError
+
+    # Create mock response for the exception
+    mock_response = Mock()
+    mock_response.status_code = 429
+
+    mock_client = Mock()
+    mock_client.messages.create.side_effect = RateLimitError(
+        "Rate limit exceeded", response=mock_response, body=None
+    )
+
+    with patch("claude_lint.api_client.logger") as mock_logger:
+        with pytest.raises(RateLimitError):
+            from claude_lint.api_client import analyze_files_with_client
+
+            analyze_files_with_client(
+                mock_client,
+                "# Guidelines",
+                "Check this code",
+            )
+
+        # Verify warning was logged (not error - rate limits are expected)
+        mock_logger.warning.assert_called_once()
+        assert "Rate limit" in mock_logger.warning.call_args[0][0]
+
+
+def test_analyze_files_handles_connection_error():
+    """Test that APIConnectionError is logged and re-raised."""
+    from anthropic import APIConnectionError
+
+    # Create a mock request for the exception
+    mock_request = Mock()
+    mock_request.url = "https://api.anthropic.com/v1/messages"
+
+    mock_client = Mock()
+    mock_client.messages.create.side_effect = APIConnectionError(
+        message="Connection failed", request=mock_request
+    )
+
+    with patch("claude_lint.api_client.logger") as mock_logger:
+        with pytest.raises(APIConnectionError):
+            from claude_lint.api_client import analyze_files_with_client
+
+            analyze_files_with_client(
+                mock_client,
+                "# Guidelines",
+                "Check this code",
+            )
+
+        # Verify error was logged
+        mock_logger.error.assert_called_once()
+        assert "connection failed" in mock_logger.error.call_args[0][0].lower()
+
+
+def test_analyze_files_handles_generic_api_error():
+    """Test that generic APIError is logged and re-raised."""
+    from anthropic import APIError
+
+    # Create a mock request for the exception
+    mock_request = Mock()
+    mock_request.url = "https://api.anthropic.com/v1/messages"
+
+    mock_client = Mock()
+    mock_client.messages.create.side_effect = APIError("API error", mock_request, body=None)
+
+    with patch("claude_lint.api_client.logger") as mock_logger:
+        with pytest.raises(APIError):
+            from claude_lint.api_client import analyze_files_with_client
+
+            analyze_files_with_client(
+                mock_client,
+                "# Guidelines",
+                "Check this code",
+            )
+
+        # Verify error was logged
+        mock_logger.error.assert_called_once()
+        assert "API error" in mock_logger.error.call_args[0][0]
