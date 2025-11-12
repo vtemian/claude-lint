@@ -47,16 +47,33 @@ def validate_batch_size(batch_size: int) -> None:
 
 
 def validate_api_key(api_key: str | None) -> None:
-    """Validate API key.
+    """Validate API key is present and well-formed.
 
     Args:
         api_key: API key to validate
 
     Raises:
-        ValueError: If API key is missing or empty
+        ValueError: If API key is missing or malformed
     """
-    if not api_key:
+    if not api_key or not api_key.strip():
         raise ValueError(
             "API key is required. Set ANTHROPIC_API_KEY environment variable "
-            "or provide in config file."
+            "or add 'api_key' to .agent-lint.json"
+        )
+
+    key = api_key.strip()
+
+    # Check prefix
+    if not key.startswith("sk-ant-"):
+        raise ValueError(
+            "Invalid API key format. Anthropic API keys should start with 'sk-ant-'. "
+            "Check your key at https://console.anthropic.com/"
+        )
+
+    # Check minimum length (Anthropic keys are typically 40+ chars after prefix)
+    if len(key) < 40:
+        raise ValueError(
+            f"API key appears too short ({len(key)} chars). "
+            "Anthropic API keys are typically 40+ characters. "
+            "Check your key at https://console.anthropic.com/"
         )

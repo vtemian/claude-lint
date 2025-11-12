@@ -26,7 +26,7 @@ def test_skip_large_files():
             exclude=[],
             batch_size=10,
             max_file_size_mb=1.0,  # 1MB limit
-            api_key="test-key",
+            api_key="sk-ant-" + "x" * 50,  # Valid test key format
         )
 
         with patch("claude_lint.batch_processor.analyze_files_with_client") as mock_api:

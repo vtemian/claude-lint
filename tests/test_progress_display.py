@@ -21,7 +21,7 @@ def test_progress_display_enabled_by_default(capsys):
             include=["**/*.py"],
             exclude=[],
             batch_size=1,  # Force 2 batches
-            api_key="test-key",
+            api_key="sk-ant-" + "x" * 50,  # Valid test key format
         )
 
         with patch("claude_lint.orchestrator.create_client") as mock_create:
@@ -52,7 +52,7 @@ def test_progress_can_be_disabled():
             exclude=[],
             batch_size=10,
             show_progress=False,  # Disable progress
-            api_key="test-key",
+            api_key="sk-ant-" + "x" * 50,  # Valid test key format
         )
 
         with patch("claude_lint.orchestrator.create_client") as mock_create:

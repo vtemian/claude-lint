@@ -17,7 +17,12 @@ def test_file_with_invalid_utf8():
 
         (tmpdir / "CLAUDE.md").write_text("# Guidelines")
 
-        config = Config(include=["**/*.py"], exclude=[], batch_size=10, api_key="test-key")
+        config = Config(
+            include=["**/*.py"],
+            exclude=[],
+            batch_size=10,
+            api_key="sk-ant-" + "x" * 50,  # Valid test key format
+        )
 
         # Should skip binary file with warning (check logs)
         with patch("claude_lint.batch_processor.analyze_files_with_client") as mock_api:
@@ -45,7 +50,12 @@ def test_file_reading_fallback_encoding():
 
         (tmpdir / "CLAUDE.md").write_text("# Guidelines")
 
-        config = Config(include=["**/*.py"], exclude=[], batch_size=10, api_key="test-key")
+        config = Config(
+            include=["**/*.py"],
+            exclude=[],
+            batch_size=10,
+            api_key="sk-ant-" + "x" * 50,  # Valid test key format
+        )
 
         with patch("claude_lint.batch_processor.analyze_files_with_client") as mock_api:
             with patch("claude_lint.orchestrator.create_client") as mock_create:

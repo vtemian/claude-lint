@@ -43,7 +43,10 @@ def test_orchestrator_full_scan(mock_is_git, mock_create_client, mock_analyze):
 
         # Run orchestrator
         config = Config(
-            include=["**/*.py"], exclude=["tests/**"], batch_size=10, api_key="test-key"
+            include=["**/*.py"],
+            exclude=["tests/**"],
+            batch_size=10,
+            api_key="sk-ant-" + "x" * 50,  # Valid test key format
         )
 
         results, metrics = run_compliance_check(tmpdir, config, mode="full")
@@ -88,7 +91,12 @@ def test_orchestrator_diff_mode(mock_is_git, mock_git_diff, mock_create_client, 
         )
 
         # Run orchestrator
-        config = Config(include=["**/*.py"], exclude=[], batch_size=10, api_key="test-key")
+        config = Config(
+            include=["**/*.py"],
+            exclude=[],
+            batch_size=10,
+            api_key="sk-ant-" + "x" * 50,  # Valid test key format
+        )
 
         results, metrics = run_compliance_check(tmpdir, config, mode="diff", base_branch="main")
 
