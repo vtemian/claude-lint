@@ -1,8 +1,9 @@
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
-from claude_lint.orchestrator import run_compliance_check
+
 from claude_lint.config import Config
+from claude_lint.orchestrator import run_compliance_check
 
 
 @patch("claude_lint.batch_processor.analyze_files_with_client")

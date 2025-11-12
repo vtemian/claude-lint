@@ -1,6 +1,7 @@
 """Tests for rate limiting functionality."""
-import time
 import threading
+import time
+
 from claude_lint.rate_limiter import RateLimiter
 
 

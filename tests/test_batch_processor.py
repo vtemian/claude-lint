@@ -2,7 +2,8 @@
 import logging
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
+
 from claude_lint.batch_processor import process_batch
 from claude_lint.cache import Cache
 from claude_lint.config import Config

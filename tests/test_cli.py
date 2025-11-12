@@ -1,8 +1,9 @@
 from pathlib import Path
 from unittest.mock import patch
-from click.testing import CliRunner
+
 from claude_lint.cli import main
 from claude_lint.metrics import AnalysisMetrics
+from click.testing import CliRunner
 
 
 @patch("claude_lint.cli.run_compliance_check")

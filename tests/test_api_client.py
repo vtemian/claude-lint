@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
 from claude_lint.api_client import analyze_files, get_usage_stats
 

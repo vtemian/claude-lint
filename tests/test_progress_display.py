@@ -1,9 +1,10 @@
 """Tests for progress display functionality."""
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from claude_lint.orchestrator import run_compliance_check
+from unittest.mock import MagicMock, patch
+
 from claude_lint.config import Config
+from claude_lint.orchestrator import run_compliance_check
 
 
 def test_progress_display_enabled_by_default(capsys):

@@ -1,7 +1,8 @@
 """Tests for CLI exception handling."""
-from click.testing import CliRunner
 from unittest.mock import patch
+
 from claude_lint.cli import main
+from click.testing import CliRunner
 
 
 def test_keyboard_interrupt_exits_with_130():

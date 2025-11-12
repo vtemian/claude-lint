@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path
+
 from claude_lint.cache import Cache, CacheEntry, load_cache, save_cache
 
 

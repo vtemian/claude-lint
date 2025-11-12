@@ -1,10 +1,11 @@
+import subprocess
 import tempfile
 from pathlib import Path
-import subprocess
+
 from claude_lint.git_utils import (
     get_changed_files_from_branch,
-    get_working_directory_files,
     get_staged_files,
+    get_working_directory_files,
     is_git_repo,
 )
 

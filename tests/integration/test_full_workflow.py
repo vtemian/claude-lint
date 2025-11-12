@@ -1,10 +1,11 @@
 """End-to-end integration tests."""
+import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
-import shutil
+
 import pytest
-import json
 
 
 @pytest.fixture

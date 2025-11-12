@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path
+
 from claude_lint.collector import collect_all_files, is_excluded
 from claude_lint.config import Config
 

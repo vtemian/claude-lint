@@ -28,7 +28,8 @@ repos:
           - click
           - rich
           - pydantic
-        args: [--config-file=mypy.ini]
+        args: [--config-file=mypy.ini, --ignore-missing-imports]
+        files: ^src/
 
   - repo: local
     hooks:

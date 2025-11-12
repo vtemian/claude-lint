@@ -1,7 +1,8 @@
 """Tests for safe file reading."""
 import tempfile
 from pathlib import Path
-from claude_lint.file_reader import read_file_safely, read_batch_files
+
+from claude_lint.file_reader import read_batch_files, read_file_safely
 
 
 def test_read_file_safely_utf8():

@@ -1,7 +1,8 @@
-import tempfile
 import json
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
+
 import pytest
 from claude_lint.file_utils import atomic_write_json
 

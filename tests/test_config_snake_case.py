@@ -1,7 +1,8 @@
 """Tests for snake_case config support."""
-import tempfile
 import json
+import tempfile
 from pathlib import Path
+
 from claude_lint.config import load_config
 
 

@@ -1,8 +1,9 @@
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, Mock
-from claude_lint.orchestrator import run_compliance_check
+from unittest.mock import Mock, patch
+
 from claude_lint.config import Config
+from claude_lint.orchestrator import run_compliance_check
 
 
 def test_file_with_invalid_utf8():

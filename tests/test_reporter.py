@@ -1,11 +1,12 @@
 import json
+
+from claude_lint.metrics import AnalysisMetrics
 from claude_lint.reporter import (
-    get_exit_code,
-    get_summary,
     format_detailed_report,
     format_json_report,
+    get_exit_code,
+    get_summary,
 )
-from claude_lint.metrics import AnalysisMetrics
 
 
 def test_format_detailed_report():

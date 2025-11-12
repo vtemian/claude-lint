@@ -1,6 +1,7 @@
-from unittest.mock import Mock
-import pytest
 import logging
+from unittest.mock import Mock
+
+import pytest
 from claude_lint.retry import retry_with_backoff
 
 

@@ -1,7 +1,7 @@
 """Tests for config validation."""
 import pytest
-from pydantic import ValidationError
 from claude_lint.config import Config
+from pydantic import ValidationError
 
 
 def test_config_rejects_negative_batch_size():

@@ -1,4 +1,4 @@
-from claude_lint.processor import create_batches, parse_response, build_xml_prompt
+from claude_lint.processor import build_xml_prompt, create_batches, parse_response
 
 
 def test_build_xml_prompt():

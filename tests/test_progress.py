@@ -1,15 +1,16 @@
 import tempfile
 from pathlib import Path
+
 import pytest
 from claude_lint.progress import (
+    cleanup_progress,
     create_progress_state,
-    update_progress,
-    save_progress,
-    load_progress,
+    get_progress_percentage,
     get_remaining_batch_indices,
     is_progress_complete,
-    get_progress_percentage,
-    cleanup_progress,
+    load_progress,
+    save_progress,
+    update_progress,
 )
 
 

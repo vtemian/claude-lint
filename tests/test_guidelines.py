@@ -1,8 +1,9 @@
 import hashlib
 import tempfile
 from pathlib import Path
+
 import pytest
-from claude_lint.guidelines import read_claude_md, get_claude_md_hash
+from claude_lint.guidelines import get_claude_md_hash, read_claude_md
 
 
 def test_read_claude_md_from_project():

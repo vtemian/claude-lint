@@ -85,7 +85,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
-    "S101",  # allow assert in tests
+    "S101",    # allow assert in tests
+    "SIM117",  # allow nested with statements in tests
+    "PTH123",  # allow open() in tests for flexibility
 ]
 
 [tool.pytest.ini_options]

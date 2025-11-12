@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
-from claude_lint.collector import collect_all_files, filter_files_by_list, compute_file_hash
+
+from claude_lint.collector import collect_all_files, compute_file_hash, filter_files_by_list
 from claude_lint.config import Config
 
 

@@ -1,6 +1,7 @@
 """Tests for API timeout handling."""
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from anthropic import APITimeoutError
 from claude_lint.api_client import analyze_files_with_client, create_client
 from claude_lint.config import get_default_config

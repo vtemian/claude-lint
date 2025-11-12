@@ -1,6 +1,7 @@
 """Tests for metrics tracking."""
-from claude_lint.metrics import AnalysisMetrics
 import time
+
+from claude_lint.metrics import AnalysisMetrics
 
 
 def test_metrics_initialization():

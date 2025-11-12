@@ -1,5 +1,6 @@
 import logging
-from claude_lint.logging_config import setup_logging, get_logger
+
+from claude_lint.logging_config import get_logger, setup_logging
 
 
 def test_setup_logging_default():

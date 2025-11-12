@@ -1,6 +1,7 @@
 import json
 import tempfile
 from pathlib import Path
+
 from claude_lint.config import load_config
 
 
