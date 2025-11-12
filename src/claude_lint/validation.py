@@ -1,6 +1,8 @@
 """Input validation functions."""
 from pathlib import Path
 
+from claude_lint.constants import MIN_API_KEY_LENGTH
+
 VALID_MODES = {"full", "diff", "working", "staged"}
 
 
@@ -70,10 +72,10 @@ def validate_api_key(api_key: str | None) -> None:
             "Check your key at https://console.anthropic.com/"
         )
 
-    # Check minimum length (Anthropic keys are typically 40+ chars after prefix)
-    if len(key) < 40:
+    # Check minimum length (Anthropic keys are typically 40+ chars)
+    if len(key) < MIN_API_KEY_LENGTH:
         raise ValueError(
             f"API key appears too short ({len(key)} chars). "
-            "Anthropic API keys are typically 40+ characters. "
+            f"Anthropic API keys are typically {MIN_API_KEY_LENGTH}+ characters. "
             "Check your key at https://console.anthropic.com/"
         )

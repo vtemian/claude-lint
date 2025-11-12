@@ -2,6 +2,7 @@
 from anthropic import Anthropic, APIConnectionError, APIError, APITimeoutError, RateLimitError
 from anthropic.types import Message
 
+from claude_lint.constants import API_MAX_TOKENS
 from claude_lint.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -48,7 +49,7 @@ def analyze_files_with_client(
     try:
         response = client.messages.create(
             model=model,
-            max_tokens=4096,
+            max_tokens=API_MAX_TOKENS,
             system=[{"type": "text", "text": guidelines, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": prompt}],
         )

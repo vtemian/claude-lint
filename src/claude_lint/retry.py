@@ -4,6 +4,13 @@ import time
 from collections.abc import Callable
 from typing import TypeVar
 
+from claude_lint.constants import (
+    RETRY_BACKOFF_FACTOR,
+    RETRY_INITIAL_DELAY,
+    RETRY_JITTER_MAX,
+    RETRY_JITTER_MIN,
+    RETRY_MAX_ATTEMPTS,
+)
 from claude_lint.logging_config import get_logger
 
 T = TypeVar("T")
@@ -12,9 +19,9 @@ logger = get_logger(__name__)
 
 def retry_with_backoff(
     func: Callable[[], T],
-    max_retries: int = 3,
-    initial_delay: float = 1.0,
-    backoff_factor: float = 2.0,
+    max_retries: int = RETRY_MAX_ATTEMPTS,
+    initial_delay: float = RETRY_INITIAL_DELAY,
+    backoff_factor: float = RETRY_BACKOFF_FACTOR,
 ) -> T:
     """Retry a function with exponential backoff and jitter.
 
@@ -23,9 +30,9 @@ def retry_with_backoff(
 
     Args:
         func: Function to retry
-        max_retries: Maximum number of retry attempts
-        initial_delay: Initial delay in seconds
-        backoff_factor: Multiplier for delay after each retry
+        max_retries: Maximum number of retry attempts (default from constants)
+        initial_delay: Initial delay in seconds (default from constants)
+        backoff_factor: Multiplier for delay after each retry (default from constants)
 
     Returns:
         Result from successful function call
@@ -50,8 +57,9 @@ def retry_with_backoff(
             last_exception = e
 
             if attempt < max_retries - 1:  # Don't sleep on last attempt
-                # Add jitter: random value between 0.5x and 1.5x the delay
-                jittered_delay = delay * (0.5 + random.random())
+                # Add jitter: random value between JITTER_MIN and JITTER_MAX
+                jitter = RETRY_JITTER_MIN + random.random() * (RETRY_JITTER_MAX - RETRY_JITTER_MIN)
+                jittered_delay = delay * jitter
 
                 logger.debug(
                     f"Attempt {attempt + 1}/{max_retries} failed with "
