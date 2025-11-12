@@ -82,6 +82,7 @@ def _process_all_batches(
         progress_callback: Any = None,
     ) -> Any:
         nonlocal api_calls_made
+        nonlocal progress_state
 
         for idx, batch_idx in enumerate(remaining_batches):
             batch = batches[batch_idx]
@@ -103,7 +104,6 @@ def _process_all_batches(
             all_results.extend(batch_results)
             api_calls_made += 1
 
-            nonlocal progress_state
             progress_state = update_progress(progress_state, batch_idx, batch_results)
             save_progress(progress_state, progress_path)
             save_cache(cache, cache_path)
