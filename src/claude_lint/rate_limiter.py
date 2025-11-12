@@ -10,7 +10,7 @@ class RateLimiter:
     Limits the number of requests within a time window using a sliding
     window algorithm for accurate rate limiting.
 
-    Thread-safe: All operations are protected by a lock.
+    Thread-safe: All operations are protected by a lock and condition variable.
     """
 
     def __init__(self, max_requests: int, window_seconds: float):
@@ -24,6 +24,7 @@ class RateLimiter:
         self.window_seconds = window_seconds
         self.requests: deque[float] = deque()
         self._lock = threading.Lock()
+        self._condition = threading.Condition(self._lock)
 
     def acquire(self) -> None:
         """Acquire a rate limit token, blocking if necessary.
@@ -31,33 +32,30 @@ class RateLimiter:
         This method blocks until a token is available within the rate limit.
         Uses a sliding window to track requests.
 
-        Thread-safe: Uses lock to prevent race conditions.
+        Thread-safe: Uses condition variable to wait without releasing lock unsafely.
         """
-        with self._lock:
+        with self._condition:
             now = time.time()
 
             # Remove requests outside the current window
             while self.requests and self.requests[0] < now - self.window_seconds:
                 self.requests.popleft()
 
-            # If at limit, wait until oldest request expires
-            if len(self.requests) >= self.max_requests:
-                sleep_time = self.requests[0] + self.window_seconds - now
-                if sleep_time > 0:
-                    # Release lock while sleeping to allow other threads
-                    self._lock.release()
-                    try:
-                        time.sleep(sleep_time)
-                    finally:
-                        self._lock.acquire()
+            # Wait while at limit
+            while len(self.requests) >= self.max_requests:
+                # Calculate how long to wait for oldest request to expire
+                sleep_time = self.requests[0] + self.window_seconds - time.time()
 
-                    # Re-check time after waking
+                if sleep_time > 0:
+                    # Wait with condition - atomically releases and reacquires lock
+                    self._condition.wait(timeout=sleep_time)
+
+                    # After waking, re-check time and clean up expired requests
                     now = time.time()
                     while self.requests and self.requests[0] < now - self.window_seconds:
                         self.requests.popleft()
-
-                # Remove expired request if still at limit
-                if len(self.requests) >= self.max_requests:
+                else:
+                    # Oldest request already expired, remove it
                     self.requests.popleft()
 
             # Record this request

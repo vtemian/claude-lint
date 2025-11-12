@@ -112,3 +112,37 @@ def test_try_acquire_non_blocking():
 
     # Should succeed again
     assert limiter.try_acquire() is True
+
+
+def test_rate_limiter_no_race_condition():
+    """Test that condition wait prevents race conditions."""
+    limiter = RateLimiter(max_requests=2, window_seconds=1.0)
+
+    acquired = []
+
+    def acquire_token(thread_id):
+        limiter.acquire()
+        acquired.append((thread_id, time.time()))
+
+    # Start 5 threads trying to acquire at once
+    threads = []
+    for i in range(5):
+        t = threading.Thread(target=acquire_token, args=(i,))
+        threads.append(t)
+        t.start()
+
+    # Wait for all threads
+    for t in threads:
+        t.join(timeout=5.0)
+
+    # Verify all 5 tokens were acquired
+    assert len(acquired) == 5
+
+    # Verify timing: first 2 immediate, next 3 after ~1 second
+    times = sorted([t for _, t in acquired])
+
+    # First 2 should be immediate
+    assert times[1] - times[0] < 0.1
+
+    # Third should wait ~1 second for first to expire
+    assert times[2] - times[0] >= 0.9
