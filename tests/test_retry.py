@@ -1,5 +1,6 @@
 from unittest.mock import Mock
 import pytest
+import logging
 from claude_lint.retry import retry_with_backoff
 
 
@@ -58,3 +59,41 @@ def test_exponential_backoff_timing():
 
     # Second delay should be roughly 2x first delay
     assert delay2 > delay1 * 1.8  # Account for timing variance
+
+
+def test_retry_logs_attempts(caplog):
+    """Test that retry attempts are logged."""
+    # Get the parent logger and ensure it has proper settings
+    parent_logger = logging.getLogger("claude_lint")
+    parent_logger.propagate = True  # Ensure propagation
+
+    # Get retry logger and set level
+    retry_logger = logging.getLogger("claude_lint.retry")
+    original_level = retry_logger.level
+    retry_logger.setLevel(logging.DEBUG)
+    retry_logger.propagate = True  # Ensure propagation
+
+    attempt_count = 0
+
+    def flaky_function():
+        nonlocal attempt_count
+        attempt_count += 1
+        if attempt_count < 3:
+            raise RuntimeError(f"Attempt {attempt_count} failed")
+        return "success"
+
+    try:
+        with caplog.at_level(logging.DEBUG, logger="claude_lint"):
+            result = retry_with_backoff(flaky_function, max_retries=3, initial_delay=0.01)
+
+        assert result == "success"
+        assert attempt_count == 3
+
+        # Check logging
+        debug_messages = [r.message for r in caplog.records if r.levelname == "DEBUG"]
+        assert len(debug_messages) >= 2  # At least 2 retry messages
+        assert any("Attempt 1" in msg for msg in debug_messages)
+        assert any("Attempt 2" in msg for msg in debug_messages)
+    finally:
+        # Restore original level
+        retry_logger.setLevel(original_level)

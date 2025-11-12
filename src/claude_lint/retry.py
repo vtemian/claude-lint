@@ -1,8 +1,10 @@
 """Retry logic with exponential backoff."""
 import time
 from typing import Callable, TypeVar
+from claude_lint.logging_config import get_logger
 
 T = TypeVar("T")
+logger = get_logger(__name__)
 
 
 def retry_with_backoff(
@@ -32,6 +34,8 @@ def retry_with_backoff(
 
     for attempt in range(max_retries):
         try:
+            if attempt > 0:
+                logger.debug(f"Retry attempt {attempt + 1}/{max_retries}")
             return func()
         except (KeyboardInterrupt, SystemExit):
             # Never catch these - re-raise immediately
@@ -40,8 +44,17 @@ def retry_with_backoff(
             last_exception = e
 
             if attempt < max_retries - 1:  # Don't sleep on last attempt
+                logger.debug(
+                    f"Attempt {attempt + 1}/{max_retries} failed with "
+                    f"{type(e).__name__}: {e}. Retrying in {delay:.1f}s..."
+                )
                 time.sleep(delay)
                 delay *= backoff_factor
+            else:
+                logger.debug(
+                    f"Attempt {attempt + 1}/{max_retries} failed with "
+                    f"{type(e).__name__}: {e}. No more retries."
+                )
 
     # All retries exhausted
     if last_exception is not None:
