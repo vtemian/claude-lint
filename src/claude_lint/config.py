@@ -45,7 +45,31 @@ def get_default_config() -> Config:
     """
     return Config(
         include=["**/*.py", "**/*.js", "**/*.ts"],
-        exclude=["node_modules/**", "dist/**", ".git/**"],
+        exclude=[
+            # Version control
+            ".git/**",
+            # Python virtual environments
+            ".venv/**",
+            "venv/**",
+            "env/**",
+            ".env/**",
+            # Python cache
+            "__pycache__/**",
+            "*.pyc",
+            "*.pyo",
+            ".pytest_cache/**",
+            ".mypy_cache/**",
+            ".ruff_cache/**",
+            # Node.js
+            "node_modules/**",
+            # Build outputs
+            "dist/**",
+            "build/**",
+            "*.egg-info/**",
+            # IDE
+            ".vscode/**",
+            ".idea/**",
+        ],
         batch_size=10,
         model="claude-sonnet-4-5-20250929",
         max_file_size_mb=1.0,

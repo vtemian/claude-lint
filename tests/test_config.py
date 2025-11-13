@@ -14,7 +14,12 @@ def test_load_config_with_defaults():
         config = load_config(config_path)
 
         assert config.include == ["**/*.py", "**/*.js", "**/*.ts"]
-        assert config.exclude == ["node_modules/**", "dist/**", ".git/**"]
+        # Check that common exclude patterns are present
+        assert ".venv/**" in config.exclude
+        assert "venv/**" in config.exclude
+        assert "node_modules/**" in config.exclude
+        assert ".git/**" in config.exclude
+        assert "__pycache__/**" in config.exclude
         assert config.batch_size == 10
 
 

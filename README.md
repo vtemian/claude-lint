@@ -156,14 +156,23 @@ Create `.lint-claude.json` in your project root:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `include` | `["**/*"]` | Glob patterns for files to check |
-| `exclude` | `[]` | Glob patterns to skip |
+| `include` | `["**/*.py", "**/*.js", "**/*.ts"]` | Glob patterns for files to check |
+| `exclude` | See below | Glob patterns to skip |
 | `batch_size` | `10` | Files per API request (1-100) |
 | `max_file_size_mb` | `10.0` | Skip files larger than this |
 | `model` | `claude-sonnet-4-5-20250929` | Claude model to use |
 | `api_key` | (env var) | Override ANTHROPIC_API_KEY |
 | `api_timeout_seconds` | `300` | API request timeout |
 | `rate_limit_rpm` | `50` | API requests per minute |
+
+**Default exclude patterns** (automatically skipped):
+- `.venv/**`, `venv/**`, `env/**` - Python virtual environments
+- `__pycache__/**`, `*.pyc`, `*.pyo` - Python cache files
+- `.pytest_cache/**`, `.mypy_cache/**`, `.ruff_cache/**` - Test/lint caches
+- `node_modules/**` - Node.js dependencies
+- `dist/**`, `build/**`, `*.egg-info/**` - Build outputs
+- `.git/**` - Version control
+- `.vscode/**`, `.idea/**` - IDE directories
 
 Use `snake_case` (preferred) or `camelCase` for keys.
 
