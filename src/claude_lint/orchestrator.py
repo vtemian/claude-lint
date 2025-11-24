@@ -50,6 +50,7 @@ def _process_all_batches(
     cache: Cache,
     progress_state: ProgressState,
     progress_path: Path,
+    stream_callback: Any = None,
 ) -> tuple[list[dict[str, Any]], int]:
     """Process all batches with optional progress bar.
 
@@ -64,6 +65,7 @@ def _process_all_batches(
         cache: Cache object
         progress_state: Progress tracking state
         progress_path: Path to progress file
+        stream_callback: Optional callback to stream results
 
     Returns:
         Tuple of (all results, API calls made)
@@ -110,6 +112,10 @@ def _process_all_batches(
             save_progress(progress_state, progress_path)
             save_cache(cache, cache_path)
 
+            # Call stream callback if provided
+            if stream_callback:
+                stream_callback(batch_results)
+
             yield batch_results
 
     if show_progress:
@@ -154,7 +160,11 @@ def _process_all_batches(
 
 
 def run_compliance_check(
-    project_root: Path, config: Config, mode: str = "full", base_branch: str | None = None
+    project_root: Path,
+    config: Config,
+    mode: str = "full",
+    base_branch: str | None = None,
+    stream_callback: Any = None,
 ) -> tuple[list[dict[str, Any]], AnalysisMetrics]:
     """Run compliance check.
 
@@ -163,6 +173,7 @@ def run_compliance_check(
         config: Configuration
         mode: Check mode - 'full', 'diff', 'working', 'staged'
         base_branch: Base branch for diff mode
+        stream_callback: Optional callback to stream results as batches complete
 
     Returns:
         Tuple of (results list, metrics object)
@@ -241,6 +252,7 @@ def run_compliance_check(
         cache=cache,
         progress_state=progress_state,
         progress_path=progress_path,
+        stream_callback=stream_callback,
     )
 
     metrics.api_calls_made = api_calls_made

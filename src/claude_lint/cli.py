@@ -1,6 +1,8 @@
 """Command-line interface for claude-lint."""
+import json
 import sys
 from pathlib import Path
+from typing import Any, TextIO
 
 import click
 
@@ -9,6 +11,45 @@ from claude_lint.config import load_config
 from claude_lint.logging_config import get_logger, setup_logging
 from claude_lint.orchestrator import run_compliance_check
 from claude_lint.reporter import format_detailed_report, format_json_report, get_exit_code
+
+
+def _write_batch_results(
+    file_handle: TextIO, batch_results: list[dict[str, Any]], is_json: bool
+) -> None:
+    """Write batch results to file in streaming fashion.
+
+    Args:
+        file_handle: Open file handle to write to
+        batch_results: List of file results from this batch
+        is_json: Whether to format as JSON (JSON Lines format)
+    """
+    if is_json:
+        # JSON Lines format - one JSON object per line
+        for result in batch_results:
+            file_handle.write(json.dumps(result) + "\n")
+    else:
+        # Text format - format each file result
+        for result in batch_results:
+            file_path = result.get("file", "unknown")
+            violations = result.get("violations", [])
+
+            if not violations:
+                file_handle.write(f"[OK] {file_path}\n")
+                file_handle.write("   No violations\n\n")
+            else:
+                file_handle.write(f"[FILE] {file_path}\n")
+                file_handle.write(f"   {len(violations)} violation(s) found:\n\n")
+
+                for violation in violations:
+                    vtype = violation.get("type", "unknown")
+                    message = violation.get("message", "No message")
+                    line = violation.get("line")
+
+                    line_str = f" (line {line})" if line else ""
+                    file_handle.write(f"   [WARNING] [{vtype}]{line_str}\n")
+                    file_handle.write(f"      {message}\n\n")
+
+    file_handle.flush()
 
 
 @click.command()
@@ -83,33 +124,83 @@ def _run_main(
     cfg = load_config(config_path)
 
     try:
-        # Run compliance check
-        results, metrics = run_compliance_check(
-            project_root, cfg, mode=mode, base_branch=base_branch
-        )
-
-        # Format output
-        if output_json:
-            report = format_json_report(results, metrics)
-        else:
-            report = format_detailed_report(results, metrics)
-
-        # Write to file if output path specified
+        # Setup streaming output if file specified
+        output_file_handle = None
         if output:
             output_path = Path(output)
             try:
-                output_path.write_text(report)
-                click.echo(f"Results written to {output_path}", err=True)
+                output_file_handle = output_path.open("w")
+                # Write header for text format
+                if not output_json:
+                    output_file_handle.write("=" * 70 + "\n")
+                    output_file_handle.write("CLAUDE.MD COMPLIANCE REPORT (STREAMING)\n")
+                    output_file_handle.write("=" * 70 + "\n\n")
+                    output_file_handle.flush()
             except (OSError, PermissionError) as e:
-                click.echo(f"Error writing to {output_path}: {e}", err=True)
+                click.echo(f"Error opening {output_path}: {e}", err=True)
                 sys.exit(2)
 
-        # Always print to stdout as well
-        click.echo(report)
+        try:
+            # Run compliance check with streaming callback
+            def stream_results(batch_results: list) -> None:
+                if output_file_handle:
+                    _write_batch_results(output_file_handle, batch_results, output_json)
 
-        # Exit with appropriate code
-        exit_code_val = get_exit_code(results)
-        sys.exit(exit_code_val)
+            results, metrics = run_compliance_check(
+                project_root,
+                cfg,
+                mode=mode,
+                base_branch=base_branch,
+                stream_callback=stream_results if output else None,
+            )
+
+            # Format full output for stdout
+            if output_json:
+                report = format_json_report(results, metrics)
+            else:
+                report = format_detailed_report(results, metrics)
+
+            # Write summary to file if streaming
+            if output_file_handle:
+                if not output_json:
+                    output_file_handle.write("\n" + "=" * 70 + "\n")
+                    output_file_handle.write("SUMMARY\n")
+                    output_file_handle.write("=" * 70 + "\n")
+                    # Extract summary from full report
+                    summary_lines = report.split("\n")
+                    in_summary = False
+                    for line in summary_lines:
+                        if "SUMMARY" in line or in_summary:
+                            in_summary = True
+                            output_file_handle.write(line + "\n")
+                    output_file_handle.flush()
+                else:
+                    # For JSON, write final summary object
+                    import json
+
+                    summary_obj = {
+                        "summary": {
+                            "total_files": metrics.total_files_collected,
+                            "files_analyzed": metrics.files_analyzed,
+                            "api_calls": metrics.api_calls_made,
+                        }
+                    }
+                    output_file_handle.write(json.dumps(summary_obj) + "\n")
+                    output_file_handle.flush()
+
+                output_file_handle.close()
+                click.echo(f"Results written to {output_path}", err=True)
+
+            # Always print to stdout as well
+            click.echo(report)
+
+            # Exit with appropriate code
+            exit_code_val = get_exit_code(results)
+            sys.exit(exit_code_val)
+
+        finally:
+            if output_file_handle and not output_file_handle.closed:
+                output_file_handle.close()
 
     except KeyboardInterrupt:
         # Re-raise to be caught by main()

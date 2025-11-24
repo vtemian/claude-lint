@@ -107,7 +107,17 @@ def test_cli_output_to_file(mock_run_check):
 
         mock_metrics = AnalysisMetrics()
         mock_metrics.finish()
-        mock_run_check.return_value = ([{"file": "test.py", "violations": []}], mock_metrics)
+
+        # Mock the function to call stream_callback
+        def mock_run_with_stream(*args, **kwargs):
+            stream_callback = kwargs.get("stream_callback")
+            results = [{"file": "test.py", "violations": []}]
+            # Call the stream callback if provided
+            if stream_callback:
+                stream_callback(results)
+            return results, mock_metrics
+
+        mock_run_check.side_effect = mock_run_with_stream
 
         result = runner.invoke(main, ["--full", "--output", "report.txt"])
 
