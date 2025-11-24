@@ -29,6 +29,7 @@ def process_batch(
     client: Anthropic,
     rate_limiter: RateLimiter,
     cache: Cache,
+    progress_callback: Any = None,
 ) -> list[dict[str, Any]]:
     """Process a single batch of files.
 
@@ -48,11 +49,14 @@ def process_batch(
         client: Anthropic client
         rate_limiter: Rate limiter for API calls
         cache: Cache object to update
+        progress_callback: Optional callback for progress updates
 
     Returns:
         List of file results as dicts
     """
     # Read files
+    if progress_callback:
+        progress_callback("Reading files")
     file_contents = read_batch_files(batch, project_root, config.max_file_size_mb)
 
     # Skip if no files to process
@@ -60,9 +64,14 @@ def process_batch(
         return []
 
     # Build prompt
+    if progress_callback:
+        progress_callback("Building prompt")
     prompt = build_xml_prompt(guidelines, file_contents)
 
     # Make rate-limited API call with retry
+    if progress_callback:
+        progress_callback("Calling Claude API")
+
     def api_call() -> str:
         rate_limiter.acquire()
         response_text, _ = analyze_files_with_client(client, guidelines, prompt, model=config.model)
@@ -71,10 +80,14 @@ def process_batch(
     response = retry_with_backoff(api_call)
 
     # Parse results
+    if progress_callback:
+        progress_callback("Processing response")
     batch_results: list[FileResult] = parse_response(response)
     batch_results_dict: list[dict[str, Any]] = [dict(r) for r in batch_results]
 
     # Update cache
+    if progress_callback:
+        progress_callback("Updating cache")
     for result in batch_results:
         try:
             file_path = project_root / result["file"]

@@ -80,6 +80,7 @@ def _process_all_batches(
     # Common batch processing logic
     def process_batches_iter(
         progress_callback: Any = None,
+        detail_callback: Any = None,
     ) -> Any:
         nonlocal api_calls_made
         nonlocal progress_state
@@ -99,6 +100,7 @@ def _process_all_batches(
                 client,
                 rate_limiter,
                 cache,
+                progress_callback=detail_callback,
             )
 
             all_results.extend(batch_results)
@@ -124,12 +126,24 @@ def _process_all_batches(
                 "Analyzing files", total=len(remaining_batches), status="Starting..."
             )
 
+            current_batch_info = {"idx": 0, "size": 0}
+
             def progress_callback(idx: int, batch_idx: int, batch_size: int) -> None:
+                current_batch_info["idx"] = idx
+                current_batch_info["size"] = batch_size
                 progress.update(
                     task, status=f"Batch {idx + 1}/{len(remaining_batches)} ({batch_size} files)"
                 )
 
-            for _ in process_batches_iter(progress_callback):
+            def detail_callback(detail: str) -> None:
+                idx = current_batch_info["idx"]
+                size = current_batch_info["size"]
+                progress.update(
+                    task,
+                    status=f"Batch {idx + 1}/{len(remaining_batches)} ({size} files) - {detail}",
+                )
+
+            for _ in process_batches_iter(progress_callback, detail_callback):
                 progress.update(task, advance=1, status="Complete")
     else:
         # No progress bar - just iterate
