@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from claude_lint.orchestrator import init_or_load_progress
 from claude_lint.progress import (
     cleanup_progress,
     create_progress_state,
@@ -86,3 +87,25 @@ def test_cleanup_on_complete():
         cleanup_progress(progress_file)
 
         assert not progress_file.exists()
+
+
+def test_init_or_load_progress_with_batch_count_mismatch():
+    """Test that stale progress is discarded when batch count changes."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        progress_file = Path(tmpdir) / ".agent-lint-progress.json"
+
+        # Create and save progress with 5 batches
+        state = create_progress_state(total_batches=5)
+        state = update_progress(state, batch_index=0, results=[{"file": "a.py", "violations": []}])
+        state = update_progress(state, batch_index=1, results=[{"file": "b.py", "violations": []}])
+        save_progress(state, progress_file)
+
+        # Try to load with different batch count (3 batches)
+        # Should discard old progress and return fresh state
+        resumed = init_or_load_progress(progress_file, total_batches=3)
+
+        # Should get fresh state with correct batch count
+        assert resumed.total_batches == 3
+        # Should have no completed batches (old progress discarded)
+        assert len(resumed.completed_batch_indices) == 0
+        assert len(resumed.results) == 0

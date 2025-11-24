@@ -350,5 +350,12 @@ def init_or_load_progress(progress_path: Path, total_batches: int) -> ProgressSt
         ProgressState object
     """
     if progress_path.exists():
-        return load_progress(progress_path)
+        loaded = load_progress(progress_path)
+        if loaded.total_batches == total_batches:
+            return loaded
+        # Batch count mismatch - progress is stale
+        logger.warning(
+            f"Progress file has {loaded.total_batches} batches but current run has "
+            f"{total_batches} batches. Discarding stale progress and starting fresh."
+        )
     return create_progress_state(total_batches)
