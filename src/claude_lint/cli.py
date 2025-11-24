@@ -18,6 +18,7 @@ from claude_lint.reporter import format_detailed_report, format_json_report, get
 @click.option("--working", is_flag=True, help="Check working directory changes")
 @click.option("--staged", is_flag=True, help="Check staged files")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+@click.option("--output", "-o", type=click.Path(), help="Write output to file")
 @click.option("--verbose", is_flag=True, help="Enable verbose logging")
 @click.option("--quiet", is_flag=True, help="Suppress warnings (errors only)")
 @click.option("--config", type=click.Path(exists=True), help="Path to config file")
@@ -27,13 +28,14 @@ def main(
     working: bool,
     staged: bool,
     output_json: bool,
+    output: str | None,
     verbose: bool,
     quiet: bool,
     config: str | None,
 ) -> None:
     """Claude-lint: CLAUDE.md compliance checker."""
     try:
-        _run_main(full, diff, working, staged, output_json, verbose, quiet, config)
+        _run_main(full, diff, working, staged, output_json, output, verbose, quiet, config)
     except KeyboardInterrupt:
         click.echo("\nOperation cancelled by user", err=True)
         sys.exit(130)  # Standard SIGINT exit code
@@ -45,6 +47,7 @@ def _run_main(
     working: bool,
     staged: bool,
     output_json: bool,
+    output: str | None,
     verbose: bool,
     quiet: bool,
     config: str | None,
@@ -87,11 +90,22 @@ def _run_main(
 
         # Format output
         if output_json:
-            output = format_json_report(results, metrics)
+            report = format_json_report(results, metrics)
         else:
-            output = format_detailed_report(results, metrics)
+            report = format_detailed_report(results, metrics)
 
-        click.echo(output)
+        # Write to file if output path specified
+        if output:
+            output_path = Path(output)
+            try:
+                output_path.write_text(report)
+                click.echo(f"Results written to {output_path}", err=True)
+            except (OSError, PermissionError) as e:
+                click.echo(f"Error writing to {output_path}: {e}", err=True)
+                sys.exit(2)
+
+        # Always print to stdout as well
+        click.echo(report)
 
         # Exit with appropriate code
         exit_code_val = get_exit_code(results)

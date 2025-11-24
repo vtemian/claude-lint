@@ -94,3 +94,25 @@ def test_cli_exit_code_on_violations(mock_run_check):
         result = runner.invoke(main, ["--full"])
 
         assert result.exit_code == 1
+
+
+@patch("claude_lint.cli.run_compliance_check")
+def test_cli_output_to_file(mock_run_check):
+    """Test CLI writes output to file."""
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        Path(".agent-lint.json").write_text("{}")
+        Path("CLAUDE.md").write_text("# Guidelines")
+
+        mock_metrics = AnalysisMetrics()
+        mock_metrics.finish()
+        mock_run_check.return_value = ([{"file": "test.py", "violations": []}], mock_metrics)
+
+        result = runner.invoke(main, ["--full", "--output", "report.txt"])
+
+        assert result.exit_code == 0
+        assert Path("report.txt").exists()
+        report_content = Path("report.txt").read_text()
+        assert "test.py" in report_content
+        assert "Results written to report.txt" in result.stderr
